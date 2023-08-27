@@ -1,0 +1,99 @@
+@import url("https://fonts.googleapis.com/css?family=Montserrat|Rubik|Rubik:wght@600&display=swap");
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primaria: #87ffcf;
+    --secundaria: #68d3a9;
+    --escura: #151718;
+}
+
+body {
+    font-family: "Rubik", sans-serif;
+    background-color: #151718;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='%230f0f0f' fill-opacity='1'%3E%3Cpath fill-rule='evenodd' d='M0 0h40v40H0V0zm40 40h40v40H40V40zm0-40h2l-2 2V0zm0 4l4-4h2l-6 6V4zm0 4l8-8h2L40 10V8zm0 4L52 0h2L40 14v-2zm0 4L56 0h2L40 18v-2zm0 4L60 0h2L40 22v-2zm0 4L64 0h2L40 26v-2zm0 4L68 0h2L40 30v-2zm0 4L72 0h2L40 34v-2zm0 4L76 0h2L40 38v-2zm0 4L80 0v2L42 40h-2zm4 0L80 4v2L46 40h-2zm4 0L80 8v2L50 40h-2zm4 0l28-28v2L54 40h-2zm4 0l24-24v2L58 40h-2zm4 0l20-20v2L62 40h-2zm4 0l16-16v2L66 40h-2zm4 0l12-12v2L70 40h-2zm4 0l8-8v2l-6 6h-2zm4 0l4-4v2l-2 2h-2z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.funcionalidades button {
+    font-size: initial;
+    transition: all 0.2s;
+    background-color: var(--primaria);
+}
+
+.funcionalidades button:hover {
+    background-color: var(--primaria);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cg fill='%237ef1c3' fill-opacity='1'%3E%3Cpath fill-rule='evenodd' d='M0 0h4v4H0V0zm4 4h4v4H4V4z'/%3E%3C/g%3E%3C/svg%3E");
+    animation: none;
+}
+
+.funcionalidades button:active {
+    background-color: #7ef1c3 !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cg fill='%2375deb4' fill-opacity='1'%3E%3Cpath fill-rule='evenodd' d='M0 0h4v4H0V0zm4 4h4v4H4V4z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.elemento-movivel-container {
+    position: absolute;
+    width: 0;
+}
+
+.elemento-movivel {
+    width: fit-content;
+    background-color: #1a1a1a;
+    border: 2px solid var(--primaria);
+    position: relative;
+}
+
+.elemento-movivel header {
+    font-size: 1.4em;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--primaria);
+}
+
+.elemento-movivel header img {
+    min-width: 150px;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.linkInsert {
+    width: 20px;
+    height: 20px;
+    background-color: var(--secundaria);
+    border-radius: 50%;
+    position: absolute;
+    border: 2px solid var(--escura);
+    cursor: pointer;
+}
+
+#linkInsert1 {
+    top: 50%;
+    left: -15px;
+    transform: translate(0, -50%);
+}
+
+#linkInsert2 {
+    top: -15px;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+
+#linkInsert3 {
+    top: 50%;
+    right: -15px;
+    transform: translate(0, -50%);
+}
+
+#linkInsert4 {
+    bottom: -15px;
+    left: 50%;
+    transform: translate(-50%, 0);
+}

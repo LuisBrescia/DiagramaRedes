@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diagrama Redes</title>
+    <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="./node_modules/bootstrap-icons/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="./CSS/style.css" />
+    <link rel="stylesheet" href="./diagrama.css" />
+    <link rel="icon" type="image/svg+xml" href="./node_modules/bootstrap-icons/icons/pc-display.svg">
+</head>
+
+<body class="overflow-hidden">
+    <div class="telaInteira d-flex">
+
+        <!-- ? Página -->
+        <main class="col h-100 d-flex flex-column justify-content-between">
+            <!-- * Botões -->
+            <div class="barraLista funcionalidades btn-group shadow-lg d-flex position-sticky top-0" role="group"
+                aria-label="Basic example">
+                <button type="button" id="adicionaElemento"
+                    class="border-0 col-4 funcionalidade btn rounded-0 fw-light">
+                    <i class="bi-plus-lg"></i>
+                    <span class="d-none d-md-inline ms-2">Adicionar</span>
+                </button>
+                <button type="button" id="alteraModo" class=" border-0 col-4 funcionalidade btn rounded-0 bolder">
+                    <i class="bi-arrows-move"></i>
+                    <span class="d-none d-md-inline ms-2">Modo Edição</span>
+                    <!-- > Aqui irá mudar entre modo edição e construção -->
+                </button>
+
+                <button type="button" id="exportaDiagrama" class="border-0 col-4 funcionalidade btn rounded-0 fw-light">
+                    <i class="bi-box-arrow-up-left"></i>
+                    <span class="d-none d-md-inline ms-2">Exportar</span>
+                </button>
+            </div>
+
+            <!-- * Nosso "Canvas" onde os cards serão adicionados -->
+            <section class="col position-static">
+                <!-- * Cards estãrao aqui -->
+                
+            </section>
+        </main>
+
+        <!-- * Toaster -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div id="liveToast" class="toast shadow" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header border-bottom border-2">
+                    <i class="bi-flower1 me-3"></i>
+                    <strong class="me-auto">Diagrama Redes</strong>
+                    <small>agora</small>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"
+                        aria-label="Close"></button>
+                </div>
+                <div class="toast-body">Não é possível adicionar mais cards.</div>
+            </div>
+        </div>
+    </div>
+    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="./node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
+    <script src="./node_modules/@popperjs/core/dist/umd/popper.js"></script>
+    <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./JS/barraLateral.js"></script>
+    <script src="./JS/leader-line.min.js"></script>
+    <script src="./script.js"></script>
+</body>
+
+</html>

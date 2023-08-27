@@ -1,10 +1,19 @@
 /*
 ? Documentação:
-function fluxoConecta(element) - Configura conexão entre dois elementos
+fluxoConecta(element) - Configura conexão entre dois elementos
 customDrag(elemento) - Configura as regras para dos elementos movíveis
-criaConteudo(id) - HTML de elemento do diagrama
+criaConteudo(elementoMovivelObjeto) - HTML de elemento do diagrama
 apagaElemento(element) - Apaga um elemento caso o ambiente esteja em modo exclusão
 */
+
+function Elemento(id, titulo, coordenadas, conexoes) {
+    this.id = id;
+    this.titulo = titulo;
+    this.coordenadas = coordenadas;
+    this.conexoes = conexoes; // * Vetor onde cara irá armazenar duas IDs
+}
+
+var elementosDiagrama = localStorage.getItem('elementosDiagrama') || [];
 
 // * Estilização da linha
 var options = {
@@ -59,11 +68,17 @@ function fluxoConecta(element) {
             console.log("Coordenadas X:", event.pageX);
             console.log("Coordenadas Y:", event.pageY);
 
-            if ($(event.target).is(".elemento-movivel-imagem, .elemento-movivel-nome")) {
+            if ($(event.target).is(".linkInsert")) {
                 console.log("mouse-solto em elemento");
 
-                // Será criado uma nova LeaderLine
+                // Pegar a id do elemento
 
+                let idDestino = $(event.target).attr('id');
+                console.log("idDestino: " + idDestino);
+                // Criar uma linha entre id e idDestino utilizando options
+                let linha = new LeaderLine(mouseEl, event.target, options);
+
+                // De alguma forma tenho que salvar aquela linha
             }
 
             console.log("mouse-solto");
@@ -88,21 +103,42 @@ function customDrag(elemento) {
             $(this).closest('.elemento-movivel-container').css('position', 'absolute');
         }
     });
+    elemento.find(".draggable").on("drag", function () {
+
+        // * Pegar a id daquele elemento
+        let id = $(this).closest('.elemento-movivel').attr('id');
+        let idNumber = parseInt(id.split('-')[2]);
+
+        console.log("Estamos vefificando as coordenadas do elemento  " + id);
+
+        elementosDiagrama[idNumber].coordenadas = [$(this).offset().left, $(this).offset().top];
+
+        localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
+        console.log("Coordenadas do elemento de id " + idNumber + ": " + elementosDiagrama[idNumber].coordenadas);
+
+        // // * Atualizar cada uma das conexoes
+        // for (let i = 0; i < TAM; i++) {
+        //     if (conexoes[i][idNumber][0] != null) {
+        //         conexoes[i][idNumber][0].position();
+        //     }
+        // }
+
+    });
 }
 
 // * HTML de um card
-function criaConteudo(id) {
+function criaConteudo(elementoMovivelObjeto) {
     return $(`
         <div class="elemento-movivel-container rounded-circle" style="top: 10%;">
-            <div id="elemento-movivel-${id}" class="elemento-movivel draggable card">
+            <div id="elemento-movivel-${elementoMovivelObjeto.id}" class="elemento-movivel draggable card">
                 <header class="elemento-movivel-header">
                     <img class="elemento-movivel-imagem" src="./roteador.jpeg"></img>
-                    <div class="elemento-movivel-nome text-center" contenteditable="true">Elemento ${id}</div>
+                    <div class="elemento-movivel-nome text-center" contenteditable="true">Elemento ${elementoMovivelObjeto.id}</div>
                 </header>
-                <span class="linkInsert" id="linkInsert-1"></span>
-                <span class="linkInsert" id="linkInsert-2"></span>
-                <span class="linkInsert" id="linkInsert-3"></span>
-                <span class="linkInsert" id="linkInsert-4"></span>
+                <span class="linkInsert" id="linkInsert-${elementoMovivelObjeto.id}1"></span>
+                <span class="linkInsert" id="linkInsert-${elementoMovivelObjeto.id}2"></span>
+                <span class="linkInsert" id="linkInsert-${elementoMovivelObjeto.id}3"></span>
+                <span class="linkInsert" id="linkInsert-${elementoMovivelObjeto.id}4"></span>
             </div>
         </div>
     `);
@@ -118,11 +154,22 @@ function apagaElemento(element) {
     });
 }
 
+function carregaElementos() {
+    for (let i = 0; i < vetorElementos.length; i++) {
+        let novoElemento = criaConteudo(vetorElementos[i]);
+        customDrag(novoElemento);
+        fluxoConecta(novoElemento);
+        apagaElemento(novoElemento);
+        paraTeste(novoElemento);
+        $('section').append(novoElemento);
+    }
+}
+
 $(document).ready(function () {
 
     $('#adicionaElemento').click(function () {
 
-        var id = 1;
+        var id = 0;
 
         while (true) {
             if ($('#elemento-movivel-' + id).length == 0) {
@@ -131,12 +178,16 @@ $(document).ready(function () {
             id++;
         }
 
-        var novoElemento = criaConteudo(id);
+        let novoElementoObjeto = new Elemento(id, "Elemento " + id, [0, 0], []);
+        let novoElemento = criaConteudo(novoElementoObjeto);
 
         customDrag(novoElemento);
         fluxoConecta(novoElemento);
         apagaElemento(novoElemento);
         paraTeste(novoElemento);
+
+        elementosDiagrama[id] = novoElementoObjeto;
+        localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
 
         $('section').append(novoElemento);
     });

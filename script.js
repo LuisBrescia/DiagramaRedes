@@ -6,14 +6,14 @@ criaConteudo(elementoMovivelObjeto) - HTML de elemento do diagrama
 apagaElemento(element) - Apaga um elemento caso o ambiente esteja em modo exclusão
 */
 
-function Elemento(id, titulo, coordenadas, conexoes) {
+function Elemento(id, nome, coordenadas, conexoes) {
     this.id = id;
-    this.titulo = titulo;
+    this.nome = nome;
     this.coordenadas = coordenadas;
     this.conexoes = conexoes; // * Vetor onde cara irá armazenar duas IDs
 }
 
-var elementosDiagrama = localStorage.getItem('elementosDiagrama') || [];
+var elementosDiagrama = JSON.parse(localStorage.getItem('elementosDiagrama')) || [];
 
 // * Estilização da linha
 var options = {
@@ -34,9 +34,7 @@ function fluxoConecta(element) {
 
         e.preventDefault();
 
-        let id = $(this).attr('id');
-        let idNumber = parseInt(id.split('-')[1]);
-        console.log("id: " + id);
+        let idNumber = pegaId($(this));
         const mouseX = e.clientX + pageXOffset;
         const mouseY = e.clientY + pageYOffset;
 
@@ -98,18 +96,17 @@ function customDrag(elemento) {
         snap: false,
         stack: ".draggable",
         cursor: "grabbing",
-        handle: ".elemento-movivel-imagem",
+        handle: ".elementoMovivel-imagem",
         stop: function () { // * Executado sempre que o card é solto
-            $(this).closest('.elemento-movivel-container').css('position', 'absolute');
+            $(this).closest('.elementoMovivel-container').css('position', 'absolute');
         }
     });
     elemento.find(".draggable").on("drag", function () {
 
         // * Pegar a id daquele elemento
-        let id = $(this).closest('.elemento-movivel').attr('id');
-        let idNumber = parseInt(id.split('-')[2]);
+        idNumber = pegaId($(this));
 
-        console.log("Estamos vefificando as coordenadas do elemento  " + id);
+        console.log("Estamos vefificando as coordenadas do elemento  elementoMovivel-" + idNumber);
 
         elementosDiagrama[idNumber].coordenadas = [$(this).offset().left, $(this).offset().top];
 
@@ -129,11 +126,11 @@ function customDrag(elemento) {
 // * HTML de um card
 function criaConteudo(elementoMovivelObjeto) {
     return $(`
-        <div class="elemento-movivel-container rounded-circle" style="top: 10%;">
-            <div id="elemento-movivel-${elementoMovivelObjeto.id}" class="elemento-movivel draggable card">
-                <header class="elemento-movivel-header">
-                    <img class="elemento-movivel-imagem" src="./roteador.jpeg"></img>
-                    <div class="elemento-movivel-nome text-center" contenteditable="true">Elemento ${elementoMovivelObjeto.id}</div>
+        <div class="elementoMovivel-container rounded-circle" style="top: 10%;">
+            <div id="elementoMovivel-${elementoMovivelObjeto.id}" class="elementoMovivel draggable card">
+                <header class="elementoMovivel-header">
+                    <img class="elementoMovivel-imagem" src="./roteador.jpeg"></img>
+                    <div class="elementoMovivel-nome text-center" contenteditable="true">Elemento ${elementoMovivelObjeto.id}</div>
                 </header>
                 <span class="linkInsert" id="linkInsert-${elementoMovivelObjeto.id}1"></span>
                 <span class="linkInsert" id="linkInsert-${elementoMovivelObjeto.id}2"></span>
@@ -144,12 +141,21 @@ function criaConteudo(elementoMovivelObjeto) {
     `);
 }
 
+function alteraNome(elemento) {
+    elemento.find('.elementoMovivel-nome').on('blur', function () {
+        console.log("Nome alterado");
+
+        // * Pegar a id daquele elemento
+        let idNumber = pegaId($(this));
+    });
+}
+
 // * Apaga um elemento caso o ambiente esteja em modo exclusão
-function apagaElemento(element) {
-    element.find('.elemento-movivel').click(function () {
+function apagaElemento(elemento) {
+    elemento.find('.elementoMovivel').click(function () {
         if ($('#alteraModo i').hasClass('bi-trash2')) {
-            $(this).closest('.elemento-movivel-container').remove();
-            $(this).closest('.elemento-movivel').remove();
+            $(this).closest('.elementoMovivel-container').remove();
+            $(this).closest('.elementoMovivel').remove();
         }
     });
 }
@@ -172,7 +178,7 @@ $(document).ready(function () {
         var id = 0;
 
         while (true) {
-            if ($('#elemento-movivel-' + id).length == 0) {
+            if ($('#elementoMovivel-' + id).length == 0) {
                 break;
             }
             id++;
@@ -185,6 +191,7 @@ $(document).ready(function () {
         fluxoConecta(novoElemento);
         apagaElemento(novoElemento);
         paraTeste(novoElemento);
+        alteraNome(novoElemento);
 
         elementosDiagrama[id] = novoElementoObjeto;
         localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
@@ -204,8 +211,12 @@ $(document).ready(function () {
 });
 
 function paraTeste(element) {
-    element.find('.elemento-movivel').click(function (e) {
+    element.find('.elementoMovivel').click(function (e) {
         e.preventDefault();
         console.log("Elemento percebido");
     });
+}
+
+function pegaId(element) {
+    return parseInt(element.closest('.elementoMovivel').attr('id').split('-')[1]);
 }

@@ -14,6 +14,7 @@ function Elemento(id, nome, coordenadas, conexoes) {
 }
 
 var elementosDiagrama = JSON.parse(localStorage.getItem('elementosDiagrama')) || [];
+var dicionarioConexoes = JSON.parse(localStorage.getItem('dicionarioConexoes')) || [];
 
 // * Estilização da linha
 var options = {
@@ -37,7 +38,6 @@ function fluxoConecta(element) {
 
         console.log("idNumber: " + idNumber);
 
-        console.log("idNumber: " + idNumber);
         const mouseX = e.clientX + pageXOffset;
         const mouseY = e.clientY + pageYOffset;
 
@@ -70,19 +70,32 @@ function fluxoConecta(element) {
             console.log("Coordenadas Y:", event.pageY);
 
             if ($(event.target).is(".linkInsert")) {
-                console.log("mouse-solto em elemento");
-
-                // Pegar a id do elemento
 
                 let idDestino = $(event.target).attr('id');
+                let idDestinoNumber = idDestino.split('-')[1];
+
+                idElementoDestino = idDestino[0];
+                idElementoOrigem = idNumber[0];
+
                 console.log("idDestino: " + idDestino);
-                // Criar uma linha entre id e idDestino utilizando options
+                console.log("idNumber: " + idNumber);
+
+                console.log("Será adicioado o valor Origem-" + idNumber + "Destino" + idDestinoNumber);
+
+                let conexaoKey = idNumber + '-' + idDestinoNumber;
                 let linha = new LeaderLine(mouseEl, event.target, options);
 
-                // De alguma forma tenho que salvar aquela linha
+                dicionarioConexoes[conexaoKey] = linha;
+
+                console.log("dicionarioConexoes: ", dicionarioConexoes);
+
+
+                elementosDiagrama[idElementoDestino].conexoes.push(conexaoKey);
+                elementosDiagrama[idElementoOrigem].conexoes.push(conexaoKey);
+
+                localStorage.setItem('dicionarioConexoes', JSON.stringify(dicionarioConexoes));
             }
 
-            console.log("mouse-solto");
             linhaMouse.remove();
             elmpoint.remove();
             $(document).off('mousemove');
@@ -109,12 +122,15 @@ function customDrag(elemento) {
         // * Pegar a id daquele elemento
         idNumber = pegaId($(this));
 
-        console.log("Estamos vefificando as coordenadas do elemento  elementoMovivel-" + idNumber);
-
         elementosDiagrama[idNumber].coordenadas = [$(this).offset().left, $(this).offset().top];
 
         localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
-        console.log("Coordenadas do elemento de id " + idNumber + ": " + elementosDiagrama[idNumber].coordenadas);
+
+        // Vou pegar cada um dos valores do vetor de conexoes e atualizar a posição
+
+        for (let i = 0; i < elementosDiagrama[idNumber].conexoes.length; i++) {
+            dicionarioConexoes[elementosDiagrama[idNumber].conexoes[i]].position();
+        }
 
         // // * Atualizar cada uma das conexoes
         // for (let i = 0; i < TAM; i++) {
@@ -135,12 +151,19 @@ function criaHTML(elementoMovivelObjeto) {
         classe = 'd-none';
     }
 
+    let conteudoStyle = '';
+    if (elementoMovivelObjeto.coordenadas == null) {
+        conteudoStyle = 'top: 10%;';
+    } else {
+        conteudoStyle = 'top: ' + elementoMovivelObjeto.coordenadas[1] + 'px; left: ' + elementoMovivelObjeto.coordenadas[0] + 'px;';
+    }
+
     return $(`
-        <div class="elementoMovivel-container rounded-circle" style="top: 10%;">
+        <div class="elementoMovivel-container rounded-circle" style="${conteudoStyle};">
             <div id="elementoMovivel-${elementoMovivelObjeto.id}" class="elementoMovivel draggable card">
                 <header class="elementoMovivel-header">
                     <img class="elementoMovivel-imagem" src="./roteador.jpeg"></img>
-                    <div class="elementoMovivel-nome text-center py-3" contenteditable="true">Elemento ${elementoMovivelObjeto.id}</div>
+                    <div class="elementoMovivel-nome text-center py-3" contenteditable="true">${elementoMovivelObjeto.nome}</div>
                 </header>
                 <span class="linkInsert ${classe}" id="linkInsert-${elementoMovivelObjeto.id}1"></span>
                 <span class="linkInsert ${classe}" id="linkInsert-${elementoMovivelObjeto.id}2"></span>
@@ -153,15 +176,15 @@ function criaHTML(elementoMovivelObjeto) {
 
 function alteraNome(elemento) {
     elemento.find('.elementoMovivel-nome').on('blur', function () {
-        console.log("Nome alterado");
-
-        // Se o nome for vazio, colocar o nome padrão
+        
         if ($(this).text() == '') {
             $(this).text('Elemento');
         }
 
-        // * Pegar a id daquele elemento
-        // let idNumber = pegaId($(this));
+        idNumber = pegaId($(this).closest('.elementoMovivel'));
+        elementosDiagrama[idNumber].nome = $(this).text();
+        localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
+        console.log("Nome alterado");
     });
 }
 
@@ -176,17 +199,19 @@ function apagaElemento(elemento) {
 }
 
 function carregaElementos() {
-    for (let i = 0; i < vetorElementos.length; i++) {
-        let novoElemento = criaHTML(vetorElementos[i]);
-        customDrag(novoElemento);
-        fluxoConecta(novoElemento);
-        apagaElemento(novoElemento);
-        paraTeste(novoElemento);
+    for (let i = 0; i < elementosDiagrama.length; i++) {
+
+        let novoElemento = criaHTML(elementosDiagrama[i]);
+
+        elementoFuncoes(novoElemento);
+
         $('section').append(novoElemento);
     }
 }
 
 $(document).ready(function () {
+
+    carregaElementos();
 
     $('#adicionaElemento').click(function () {
 
@@ -202,11 +227,7 @@ $(document).ready(function () {
         let novoElementoObjeto = new Elemento(id, "Elemento " + id, [0, 0], []);
         let novoElemento = criaHTML(novoElementoObjeto);
 
-        customDrag(novoElemento);
-        fluxoConecta(novoElemento);
-        apagaElemento(novoElemento);
-        paraTeste(novoElemento);
-        alteraNome(novoElemento);
+        elementoFuncoes(novoElemento);
 
         elementosDiagrama[id] = novoElementoObjeto;
         localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
@@ -226,13 +247,13 @@ $(document).ready(function () {
     });
 });
 
-function paraTeste(element) {
-    element.find('.elementoMovivel').click(function (e) {
-        e.preventDefault();
-        console.log("Elemento percebido");
-    });
-}
-
 function pegaId(element) {
     return parseInt(element.attr('id').split('-')[1]);
+}
+
+function elementoFuncoes(elemento) {
+    customDrag(elemento);
+    fluxoConecta(elemento);
+    apagaElemento(elemento);
+    alteraNome(elemento);
 }

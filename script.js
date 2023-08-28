@@ -2,7 +2,7 @@
 ? Documentação:
 fluxoConecta(element) - Configura conexão entre dois elementos
 customDrag(elemento) - Configura as regras para dos elementos movíveis
-criaConteudo(elementoMovivelObjeto) - HTML de elemento do diagrama
+criaHTML(elementoMovivelObjeto) - HTML de elemento do diagrama
 apagaElemento(element) - Apaga um elemento caso o ambiente esteja em modo exclusão
 */
 
@@ -18,14 +18,13 @@ var elementosDiagrama = JSON.parse(localStorage.getItem('elementosDiagrama')) ||
 // * Estilização da linha
 var options = {
     size: 5,
-    layer: 0,
-    endPlug: 'behind',
-    startSocket: 'right',
-    endSocket: 'left',
-    startPlugColor: '#0cf',
-    endPlugColor: '#04f',
-    gradient: true,
-    // color: '#04f',
+    endPlug: 'disc',
+    startSocket: 'center',
+    endSocket: 'center',
+    path: 'grid',
+    startPlugColor: '#87ffcf',
+    endPlugColor: '#f5f9f8',
+    gradient: true
 };
 
 // * Função para configurar regras para conexão
@@ -34,7 +33,11 @@ function fluxoConecta(element) {
 
         e.preventDefault();
 
-        let idNumber = pegaId($(this));
+        let idNumber = $(this).attr('id').split('-')[1];
+
+        console.log("idNumber: " + idNumber);
+
+        console.log("idNumber: " + idNumber);
         const mouseX = e.clientX + pageXOffset;
         const mouseY = e.clientY + pageYOffset;
 
@@ -124,18 +127,25 @@ function customDrag(elemento) {
 }
 
 // * HTML de um card
-function criaConteudo(elementoMovivelObjeto) {
+function criaHTML(elementoMovivelObjeto) {
+
+    let classe = '';
+
+    if ($('#alteraModo i').hasClass('bi-trash2')) {
+        classe = 'd-none';
+    }
+
     return $(`
         <div class="elementoMovivel-container rounded-circle" style="top: 10%;">
             <div id="elementoMovivel-${elementoMovivelObjeto.id}" class="elementoMovivel draggable card">
                 <header class="elementoMovivel-header">
                     <img class="elementoMovivel-imagem" src="./roteador.jpeg"></img>
-                    <div class="elementoMovivel-nome text-center" contenteditable="true">Elemento ${elementoMovivelObjeto.id}</div>
+                    <div class="elementoMovivel-nome text-center py-3" contenteditable="true">Elemento ${elementoMovivelObjeto.id}</div>
                 </header>
-                <span class="linkInsert" id="linkInsert-${elementoMovivelObjeto.id}1"></span>
-                <span class="linkInsert" id="linkInsert-${elementoMovivelObjeto.id}2"></span>
-                <span class="linkInsert" id="linkInsert-${elementoMovivelObjeto.id}3"></span>
-                <span class="linkInsert" id="linkInsert-${elementoMovivelObjeto.id}4"></span>
+                <span class="linkInsert ${classe}" id="linkInsert-${elementoMovivelObjeto.id}1"></span>
+                <span class="linkInsert ${classe}" id="linkInsert-${elementoMovivelObjeto.id}2"></span>
+                <span class="linkInsert ${classe}" id="linkInsert-${elementoMovivelObjeto.id}3"></span>
+                <span class="linkInsert ${classe}" id="linkInsert-${elementoMovivelObjeto.id}4"></span>
             </div>
         </div>
     `);
@@ -145,8 +155,13 @@ function alteraNome(elemento) {
     elemento.find('.elementoMovivel-nome').on('blur', function () {
         console.log("Nome alterado");
 
+        // Se o nome for vazio, colocar o nome padrão
+        if ($(this).text() == '') {
+            $(this).text('Elemento');
+        }
+
         // * Pegar a id daquele elemento
-        let idNumber = pegaId($(this));
+        // let idNumber = pegaId($(this));
     });
 }
 
@@ -162,7 +177,7 @@ function apagaElemento(elemento) {
 
 function carregaElementos() {
     for (let i = 0; i < vetorElementos.length; i++) {
-        let novoElemento = criaConteudo(vetorElementos[i]);
+        let novoElemento = criaHTML(vetorElementos[i]);
         customDrag(novoElemento);
         fluxoConecta(novoElemento);
         apagaElemento(novoElemento);
@@ -185,7 +200,7 @@ $(document).ready(function () {
         }
 
         let novoElementoObjeto = new Elemento(id, "Elemento " + id, [0, 0], []);
-        let novoElemento = criaConteudo(novoElementoObjeto);
+        let novoElemento = criaHTML(novoElementoObjeto);
 
         customDrag(novoElemento);
         fluxoConecta(novoElemento);
@@ -204,6 +219,7 @@ $(document).ready(function () {
         $('#alteraModo span').text(function (i, text) {
             return text === "Modo Exclusão" ? "Modo Edição" : "Modo Exclusão";
         });
+        $('.linkInsert').toggleClass('d-none');
     });
     $('#exportaDados').click(function () {
         console.log("exportarDados");
@@ -218,5 +234,5 @@ function paraTeste(element) {
 }
 
 function pegaId(element) {
-    return parseInt(element.closest('.elementoMovivel').attr('id').split('-')[1]);
+    return parseInt(element.attr('id').split('-')[1]);
 }

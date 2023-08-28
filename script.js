@@ -13,8 +13,8 @@ function Elemento(id, nome, coordenadas, conexoes) {
     this.conexoes = conexoes; // * Vetor onde cara irá armazenar duas IDs
 }
 
-var elementosDiagrama = JSON.parse(localStorage.getItem('elementosDiagrama')) || [];
-var dicionarioConexoes = JSON.parse(localStorage.getItem('dicionarioConexoes')) || [];
+var elementosDiagrama = JSON.parse(localStorage.getItem('elementosDiagrama')) || []; // ? Vetor de objetos
+var dicionarioConexoes = JSON.parse(localStorage.getItem('dicionarioConexoes')) || {}; // ! Objeto
 
 // * Estilização da linha
 var options = {
@@ -28,15 +28,13 @@ var options = {
     gradient: true
 };
 
-// * Função para configurar regras para conexão
 function fluxoConecta(element) {
     element.find('.linkInsert').mousedown(function (e) {
 
         e.preventDefault();
 
-        let idNumber = $(this).attr('id').split('-')[1];
-
-        console.log("idNumber: " + idNumber);
+        let id = $(this).attr('id');
+        let idNumber = id.split('-')[1];
 
         const mouseX = e.clientX + pageXOffset;
         const mouseY = e.clientY + pageYOffset;
@@ -66,34 +64,33 @@ function fluxoConecta(element) {
 
         $(document).mouseup(function (event) {
 
-            console.log("Coordenadas X:", event.pageX);
-            console.log("Coordenadas Y:", event.pageY);
-
             if ($(event.target).is(".linkInsert")) {
 
                 let idDestino = $(event.target).attr('id');
                 let idDestinoNumber = idDestino.split('-')[1];
 
-                idElementoDestino = idDestino[0];
+                idElementoDestino = idDestinoNumber[0];
                 idElementoOrigem = idNumber[0];
 
-                console.log("idDestino: " + idDestino);
-                console.log("idNumber: " + idNumber);
+                console.log("idDestino: " + idDestino + " idNumber: " + idNumber);
+                console.log("idElementoDestino:" + idElementoDestino + " idElementoOrigem: " + idElementoOrigem);
 
-                console.log("Será adicioado o valor Origem-" + idNumber + "Destino" + idDestinoNumber);
+                console.log("Será adicioado o valor: " + idNumber + "-" + idDestinoNumber);
 
                 let conexaoKey = idNumber + '-' + idDestinoNumber;
                 let linha = new LeaderLine(mouseEl, event.target, options);
 
-                dicionarioConexoes[conexaoKey] = linha;
+                dicionarioConexoes[conexaoKey] = idNumber + "+" + idDestinoNumber;
 
                 console.log("dicionarioConexoes: ", dicionarioConexoes);
 
+                console.log("elementosDiagrama[idElementoDestino]: ", elementosDiagrama[idElementoDestino]);
 
-                elementosDiagrama[idElementoDestino].conexoes.push(conexaoKey);
                 elementosDiagrama[idElementoOrigem].conexoes.push(conexaoKey);
+                elementosDiagrama[idElementoDestino].conexoes.push(conexaoKey);
 
                 localStorage.setItem('dicionarioConexoes', JSON.stringify(dicionarioConexoes));
+                localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
             }
 
             linhaMouse.remove();
@@ -104,7 +101,6 @@ function fluxoConecta(element) {
     });
 }
 
-// * Função para configurar regras para movimentação do card
 function customDrag(elemento) {
     elemento.find(".draggable").draggable({
         containment: "section",
@@ -129,7 +125,9 @@ function customDrag(elemento) {
         // Vou pegar cada um dos valores do vetor de conexoes e atualizar a posição
 
         for (let i = 0; i < elementosDiagrama[idNumber].conexoes.length; i++) {
-            dicionarioConexoes[elementosDiagrama[idNumber].conexoes[i]].position();
+            console.log("Atualizando a posição da conexão: ", elementosDiagrama[idNumber].conexoes[i]);
+            console.log(dicionarioConexoes[elementosDiagrama[idNumber].conexoes[i]]);
+            // dicionarioConexoes[elementosDiagrama[idNumber].conexoes[i]].position();
         }
 
         // // * Atualizar cada uma das conexoes
@@ -142,7 +140,6 @@ function customDrag(elemento) {
     });
 }
 
-// * HTML de um card
 function criaHTML(elementoMovivelObjeto) {
 
     let classe = '';
@@ -188,7 +185,6 @@ function alteraNome(elemento) {
     });
 }
 
-// * Apaga um elemento caso o ambiente esteja em modo exclusão
 function apagaElemento(elemento) {
     elemento.find('.elementoMovivel').click(function () {
         if ($('#alteraModo i').hasClass('bi-trash2')) {
@@ -206,12 +202,30 @@ function carregaElementos() {
         elementoFuncoes(novoElemento);
 
         $('section').append(novoElemento);
+        console.log("Elemento adicionado");
+    }
+}
+
+function carregaConexoes() {
+
+    for (const conexaoKey in dicionarioConexoes) {
+        if (dicionarioConexoes.hasOwnProperty(conexaoKey)) {
+            console.log("conexaoKey: " + conexaoKey);
+            const ids = conexaoKey.split('-');
+            const idOrigem = 'linkInsert-' + ids[0];
+            const idDestino = 'linkInsert-' + ids[1];
+
+            console.log("idOrigem: " + idOrigem + " idDestino: " + idDestino);
+
+            const linha = new LeaderLine(document.getElementById(idOrigem), document.getElementById(idDestino), options);
+        }
     }
 }
 
 $(document).ready(function () {
 
     carregaElementos();
+    carregaConexoes();
 
     $('#adicionaElemento').click(function () {
 

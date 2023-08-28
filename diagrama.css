@@ -46,7 +46,6 @@ body {
 
 .elementoMovivel {
     width: fit-content;
-    border: 3px solid var(--primaria);
     position: relative;
     max-width: 25vw;
 }
@@ -63,9 +62,9 @@ body {
 }
 
 .elementoMovivel header img {
-    min-width: 75px;
+    min-width: 100px;
     width: 100%;
-    max-width: 150px;
+    max-width: 100px;
     margin: 0 auto;
 }
 

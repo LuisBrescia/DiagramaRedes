@@ -16,8 +16,9 @@ function Elemento(id, nome, coordenadas, conexoes) {
 var elementosDiagrama = JSON.parse(localStorage.getItem('elementosDiagrama')) || []; // ? Vetor de objetos
 var dicionarioConexoes = JSON.parse(localStorage.getItem('dicionarioConexoes')) || {}; // ! Objeto
 
+console.log("Elementos: ", elementosDiagrama);
 for (let i = 0; i < elementosDiagrama.length; i++) {
-    elementosDiagrama[i].conexoes = [];
+    console.log(elementosDiagrama[i]);
 }
 
 // * Estilização da linha
@@ -32,9 +33,8 @@ var options = {
     gradient: true
 };
 
-function fluxoConecta(element) {
-    element.find('.linkInsert').mousedown(function (e) {
-
+function fluxoConecta(elemento) {
+    elemento.find('.linkInsert').mousedown(function (e) {
         e.preventDefault();
 
         let id = $(this).attr('id');
@@ -52,7 +52,7 @@ function fluxoConecta(element) {
         let linhaMouse = new LeaderLine(mouseEl, elmPoint, {
             size: 5,
             endPlug: 'disc',
-        
+
             path: 'grid',
             startPlugColor: '#212529',
             endPlugColor: '#f5f9f8',
@@ -121,8 +121,6 @@ function customDrag(elemento) {
         // Vou pegar cada um dos valores do vetor de conexoes e atualizar a posição
 
         for (let i = 0; i < elementosDiagrama[idNumber].conexoes.length; i++) {
-            console.log("Atualizando a posição da conexão: ", elementosDiagrama[idNumber].conexoes[i]);
-            console.log(dicionarioConexoes[elementosDiagrama[idNumber].conexoes[i]]);
             elementosDiagrama[idNumber].conexoes[i].position();
         }
 
@@ -156,7 +154,7 @@ function criaHTML(elementoMovivelObjeto) {
             <div id="elementoMovivel-${elementoMovivelObjeto.id}" class="elementoMovivel draggable card">
                 <header class="elementoMovivel-header">
                     <img class="elementoMovivel-imagem" src="./roteador.jpeg"></img>
-                    <div class="elementoMovivel-nome text-center py-3" contenteditable="true">${elementoMovivelObjeto.nome}</div>
+                    <div class="elementoMovivel-nome text-center py-1" contenteditable="true">${elementoMovivelObjeto.nome}</div>
                 </header>
                 <span class="linkInsert ${classe}" id="linkInsert-${elementoMovivelObjeto.id}1"></span>
                 <span class="linkInsert ${classe}" id="linkInsert-${elementoMovivelObjeto.id}2"></span>
@@ -169,7 +167,7 @@ function criaHTML(elementoMovivelObjeto) {
 
 function alteraNome(elemento) {
     elemento.find('.elementoMovivel-nome').on('blur', function () {
-        
+
         if ($(this).text() == '') {
             $(this).text('Elemento');
         }
@@ -183,10 +181,15 @@ function alteraNome(elemento) {
 
 function apagaElemento(elemento) {
     elemento.find('.elementoMovivel').click(function () {
-        if ($('#alteraModo i').hasClass('bi-trash2')) {
-            $(this).closest('.elementoMovivel-container').remove();
-            $(this).closest('.elementoMovivel').remove();
+        if ($('#alteraModo i').hasClass('bi-arrows-move')) {
+            console.log("Modo de exclusão desativado");
+            return;
         }
+
+        idNumber = pegaId($(this));
+        $(this).closest('.elementoMovivel-container').remove();
+
+        localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
     });
 }
 
@@ -198,26 +201,23 @@ function carregaElementos() {
         elementoFuncoes(novoElemento);
 
         $('section').append(novoElemento);
-        console.log("Elemento adicionado");
     }
 }
 
 function carregaConexoes() {
 
+    // * Antes de carregar as conexões, é necessário apagar todas elas
+    for (let i = 0; i < elementosDiagrama.length; i++) {
+        elementosDiagrama[i].conexoes = [];
+    }
+
     for (const conexaoKey in dicionarioConexoes) {
         if (dicionarioConexoes.hasOwnProperty(conexaoKey)) {
-            console.log("conexaoKey: " + conexaoKey);
-
-            // Conexão key = 03-11
-
-            // #linkInsert-03 e #linkInsert-11
 
             let idOrigem = conexaoKey.split('-')[0];
             let idDestino = conexaoKey.split('-')[1];
 
             let linha = new LeaderLine(document.getElementById('linkInsert-' + idOrigem), document.getElementById('linkInsert-' + idDestino), options);
-
-            console.log(idOrigem);
 
             let idOrigemElemento = idOrigem.slice(0, -1);
             let idOrigemDestino = idDestino.slice(0, -1);
@@ -228,8 +228,8 @@ function carregaConexoes() {
     }
 }
 
-function pegaId(element) {
-    return parseInt(element.attr('id').split('-')[1]);
+function pegaId(elemento) {
+    return parseInt(elemento.attr('id').split('-')[1]);
 }
 
 function elementoFuncoes(elemento) {
@@ -240,10 +240,6 @@ function elementoFuncoes(elemento) {
 }
 
 $(document).ready(function () {
-
-    /*
-     : Ideia de solução: Guardo a linha dentro do vetor de conexões, onde cada elemento é um objeto leaderline 
-     */
 
     carregaElementos();
     setTimeout(carregaConexoes, 300); // Provavelmente a atualização de linhas vai resolver esse problema
@@ -271,7 +267,7 @@ $(document).ready(function () {
     });
     $('#alteraModo').click(function () {
         console.log("ModoAlterado");
-        $('#alteraModo i').toggleClass('arrows-move bi-trash2');
+        $('#alteraModo i').toggleClass('bi-arrows-move bi-trash2');
         $('#alteraModo span').text(function (i, text) {
             return text === "Modo Exclusão" ? "Modo Edição" : "Modo Exclusão";
         });

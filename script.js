@@ -16,14 +16,18 @@ function Elemento(id, nome, coordenadas, conexoes) {
 var elementosDiagrama = JSON.parse(localStorage.getItem('elementosDiagrama')) || []; // ? Vetor de objetos
 var dicionarioConexoes = JSON.parse(localStorage.getItem('dicionarioConexoes')) || {}; // ! Objeto
 
+for (let i = 0; i < elementosDiagrama.length; i++) {
+    elementosDiagrama[i].conexoes = [];
+}
+
 // * Estilização da linha
 var options = {
     size: 5,
-    endPlug: 'disc',
+    endPlug: 'behind',
     startSocket: 'center',
     endSocket: 'center',
-    path: 'grid',
-    startPlugColor: '#87ffcf',
+    path: 'magnet',
+    startPlugColor: '#212529',
     endPlugColor: '#f5f9f8',
     gradient: true
 };
@@ -48,10 +52,9 @@ function fluxoConecta(element) {
         let linhaMouse = new LeaderLine(mouseEl, elmPoint, {
             size: 5,
             endPlug: 'disc',
-            startSocket: 'center',
-            endSocket: 'center',
+        
             path: 'grid',
-            startPlugColor: '#87ffcf',
+            startPlugColor: '#212529',
             endPlugColor: '#f5f9f8',
             gradient: true
         });
@@ -72,22 +75,15 @@ function fluxoConecta(element) {
                 idElementoDestino = idDestinoNumber[0];
                 idElementoOrigem = idNumber[0];
 
-                console.log("idDestino: " + idDestino + " idNumber: " + idNumber);
-                console.log("idElementoDestino:" + idElementoDestino + " idElementoOrigem: " + idElementoOrigem);
-
                 console.log("Será adicioado o valor: " + idNumber + "-" + idDestinoNumber);
 
                 let conexaoKey = idNumber + '-' + idDestinoNumber;
                 let linha = new LeaderLine(mouseEl, event.target, options);
 
-                dicionarioConexoes[conexaoKey] = idNumber + "+" + idDestinoNumber;
+                dicionarioConexoes[conexaoKey] = "Ativa";
 
-                console.log("dicionarioConexoes: ", dicionarioConexoes);
-
-                console.log("elementosDiagrama[idElementoDestino]: ", elementosDiagrama[idElementoDestino]);
-
-                elementosDiagrama[idElementoOrigem].conexoes.push(conexaoKey);
-                elementosDiagrama[idElementoDestino].conexoes.push(conexaoKey);
+                elementosDiagrama[idElementoOrigem].conexoes.push(linha);
+                elementosDiagrama[idElementoDestino].conexoes.push(linha);
 
                 localStorage.setItem('dicionarioConexoes', JSON.stringify(dicionarioConexoes));
                 localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
@@ -127,7 +123,7 @@ function customDrag(elemento) {
         for (let i = 0; i < elementosDiagrama[idNumber].conexoes.length; i++) {
             console.log("Atualizando a posição da conexão: ", elementosDiagrama[idNumber].conexoes[i]);
             console.log(dicionarioConexoes[elementosDiagrama[idNumber].conexoes[i]]);
-            // dicionarioConexoes[elementosDiagrama[idNumber].conexoes[i]].position();
+            elementosDiagrama[idNumber].conexoes[i].position();
         }
 
         // // * Atualizar cada uma das conexoes
@@ -211,21 +207,46 @@ function carregaConexoes() {
     for (const conexaoKey in dicionarioConexoes) {
         if (dicionarioConexoes.hasOwnProperty(conexaoKey)) {
             console.log("conexaoKey: " + conexaoKey);
-            const ids = conexaoKey.split('-');
-            const idOrigem = 'linkInsert-' + ids[0];
-            const idDestino = 'linkInsert-' + ids[1];
 
-            console.log("idOrigem: " + idOrigem + " idDestino: " + idDestino);
+            // Conexão key = 03-11
 
-            const linha = new LeaderLine(document.getElementById(idOrigem), document.getElementById(idDestino), options);
+            // #linkInsert-03 e #linkInsert-11
+
+            let idOrigem = conexaoKey.split('-')[0];
+            let idDestino = conexaoKey.split('-')[1];
+
+            let linha = new LeaderLine(document.getElementById('linkInsert-' + idOrigem), document.getElementById('linkInsert-' + idDestino), options);
+
+            console.log(idOrigem);
+
+            let idOrigemElemento = idOrigem.slice(0, -1);
+            let idOrigemDestino = idDestino.slice(0, -1);
+
+            elementosDiagrama[idOrigemElemento].conexoes.push(linha);
+            elementosDiagrama[idOrigemDestino].conexoes.push(linha);
         }
     }
 }
 
+function pegaId(element) {
+    return parseInt(element.attr('id').split('-')[1]);
+}
+
+function elementoFuncoes(elemento) {
+    customDrag(elemento);
+    fluxoConecta(elemento);
+    apagaElemento(elemento);
+    alteraNome(elemento);
+}
+
 $(document).ready(function () {
 
+    /*
+     : Ideia de solução: Guardo a linha dentro do vetor de conexões, onde cada elemento é um objeto leaderline 
+     */
+
     carregaElementos();
-    carregaConexoes();
+    setTimeout(carregaConexoes, 300); // Provavelmente a atualização de linhas vai resolver esse problema
 
     $('#adicionaElemento').click(function () {
 
@@ -260,14 +281,3 @@ $(document).ready(function () {
         console.log("exportarDados");
     });
 });
-
-function pegaId(element) {
-    return parseInt(element.attr('id').split('-')[1]);
-}
-
-function elementoFuncoes(elemento) {
-    customDrag(elemento);
-    fluxoConecta(elemento);
-    apagaElemento(elemento);
-    alteraNome(elemento);
-}

@@ -4,6 +4,7 @@ fluxoConecta(element) - Configura conexão entre dois elementos
 customDrag(elemento) - Configura as regras para dos elementos movíveis
 criaHTML(elementoMovivelObjeto) - HTML de elemento do diagrama
 apagaElemento(element) - Apaga um elemento caso o ambiente esteja em modo exclusão
+conexaoElementos(conexaoKey) - Retorna os elementos conextados em uma conexao 
 */
 
 function Elemento(id, nome, coordenadas, conexoes) {
@@ -14,7 +15,7 @@ function Elemento(id, nome, coordenadas, conexoes) {
 }
 
 var elementosDiagrama = JSON.parse(localStorage.getItem('elementosDiagrama')) || []; // ? Vetor de objetos
-var dicionarioConexoes = JSON.parse(localStorage.getItem('dicionarioConexoes')) || {}; // ! Objeto
+var dicionarioConexoes = JSON.parse(localStorage.getItem('dicionarioConexoes')) || []; // ! Vetor de strings
 
 for (let i = 0; i < elementosDiagrama.length; i++) {
     console.log(elementosDiagrama[i]);
@@ -22,14 +23,14 @@ for (let i = 0; i < elementosDiagrama.length; i++) {
 
 // * Estilização da linha
 var options = {
-    size: 5,
+    size: 3,
     endPlug: 'behind',
     startSocket: 'center',
     endSocket: 'center',
     path: 'fluid',
-    startPlugColor: '#000',
-    endPlugColor: '#000',
-    gradient: true
+    startPlugColor: '#0f0f0f',
+    endPlugColor: '#0f0f0f',
+    gradient: true,
 };
 
 function fluxoConecta(elemento) {
@@ -49,11 +50,11 @@ function fluxoConecta(elemento) {
         let mouseEl = document.getElementById('linkInsert-' + idNumber);
 
         let linhaMouse = new LeaderLine(mouseEl, elmPoint, {
-            size: 5,
+            size: 3,
             endPlug: 'arrow3',
             path: 'fluid',
-            startPlugColor: '#000',
-            endPlugColor: '#000',
+            startPlugColor: '#0f0f0f',
+            endPlugColor: '#0f0f0f',
             gradient: true
         });
 
@@ -83,10 +84,42 @@ function fluxoConecta(elemento) {
                     return;
                 }
 
+                // Preciso comparar id number com idDestindo e colocar o id menor primeiro
+
+                if (idNumber > idDestinoNumber) {
+                    let aux = idNumber;
+                    idNumber = String(idDestinoNumber);
+                    idDestinoNumber = String(aux);
+                }
+
                 let conexaoKey = idNumber + '-' + idDestinoNumber;
+
+                console.log(conexaoKey);
+
+                let conexaoElementosKey = conexaoElementos(conexaoKey);
+                let dicionarioConexoesElemento;
+
+                console.log(conexaoElementosKey);
+
+                for (let i = 0; i < dicionarioConexoes.length; i++) {
+
+                    dicionarioConexoesElemento = conexaoElementos(dicionarioConexoes[i]);
+                    console.log(dicionarioConexoesElemento);
+
+                    if (dicionarioConexoesElemento == conexaoElementosKey) {
+                        $('.toast-body').text('Não é possível conectar dois elementos mais de uma vez.');
+                        $('.toast').toast('show');
+                        linhaMouse.remove();
+                        elmpoint.remove();
+                        $(document).off('mousemove');
+                        $(document).off('mouseup');
+                        return;
+                    }
+                }
+
                 let linha = new LeaderLine(mouseEl, event.target, options);
 
-                dicionarioConexoes[conexaoKey] = "Ativa";
+                dicionarioConexoes.push(conexaoKey);
 
                 elementosDiagrama[idElementoOrigem].conexoes.push(linha);
                 elementosDiagrama[idElementoDestino].conexoes.push(linha);
@@ -181,13 +214,26 @@ function apagaElemento(elemento) {
         idNumber = pegaId($(this));
         $(this).closest('.elementoMovivel-container').remove();
 
-        // for (let i = 0; i < elementosDiagrama[idNumber].conexoes.length; i++) {
-        //     elementosDiagrama[idNumber].conexoes[i].remove();
-        // }
+        for (let i = 0; i < dicionarioConexoes.length; i++) {
+
+            let idOrigem = dicionarioConexoes[i].split('-')[0];
+            let idDestino = dicionarioConexoes[i].split('-')[1];
+
+            // ! Não entendi essa parte
+            if (idOrigem[0] == idNumber || idDestino[0] == idNumber) {
+                dicionarioConexoes.splice(i, 1);
+                i--;
+            }
+        }
+
+        for (let i = 0; i < elementosDiagrama[idNumber].conexoes.length; i++) {
+            elementosDiagrama[idNumber].conexoes[i].remove();
+        }
 
         elementosDiagrama[idNumber] = new Elemento(null, null, null, null);
 
         localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
+        localStorage.setItem('dicionarioConexoes', JSON.stringify(dicionarioConexoes));
     });
 }
 
@@ -207,21 +253,29 @@ function carregaConexoes() {
         elementosDiagrama[i].conexoes = [];
     }
 
-    for (const conexaoKey in dicionarioConexoes) {
-        if (dicionarioConexoes.hasOwnProperty(conexaoKey)) {
+    for (let i = 0; i < dicionarioConexoes.length; i++) {
+        let idOrigem = dicionarioConexoes[i].split('-')[0];
+        let idDestino = dicionarioConexoes[i].split('-')[1];
 
-            let idOrigem = conexaoKey.split('-')[0];
-            let idDestino = conexaoKey.split('-')[1];
+        let linha = new LeaderLine(document.getElementById('linkInsert-' + idOrigem), document.getElementById('linkInsert-' + idDestino), options);
 
-            let linha = new LeaderLine(document.getElementById('linkInsert-' + idOrigem), document.getElementById('linkInsert-' + idDestino), options);
+        let idOrigemElemento = idOrigem.slice(0, -1);
+        let idOrigemDestino = idDestino.slice(0, -1);
 
-            let idOrigemElemento = idOrigem.slice(0, -1);
-            let idOrigemDestino = idDestino.slice(0, -1);
+        elementosDiagrama[idOrigemElemento].conexoes.push(linha);
+        elementosDiagrama[idOrigemDestino].conexoes.push(linha);
 
-            elementosDiagrama[idOrigemElemento].conexoes.push(linha);
-            elementosDiagrama[idOrigemDestino].conexoes.push(linha);
-        }
     }
+}
+
+function conexaoElementos(conexaoKey) {
+    let idOrigem = conexaoKey.split('-')[0];
+    let idDestino = conexaoKey.split('-')[1];
+
+    let idOrigemElemento = idOrigem.slice(0, -1);
+    let idOrigemDestino = idDestino.slice(0, -1);
+
+    return idOrigemElemento + '-' + idOrigemDestino;
 }
 
 function pegaId(elemento) {

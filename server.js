@@ -14,22 +14,7 @@ app.use('/node_modules', express.static(path.join(__dirname, 'node_modules')));
 
 // Defina o diretório para os arquivos HTML
 router.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'HTML/Listas.html'));
-});
-router.get('/Listas.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'HTML/Listas.html'));
-});
-router.get('/Fluxo.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'HTML/Fluxo.html'));
-});
-router.get('/Chamados.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'HTML/Chamados.html'));
-});
-router.get('/Collection.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'HTML/Collection.html'));
-});
-router.get('/Valores.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'HTML/Valores.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.use(router);

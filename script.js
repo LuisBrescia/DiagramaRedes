@@ -27,9 +27,9 @@ var options = {
     endPlug: 'behind',
     startSocket: 'center',
     endSocket: 'center',
-    path: 'magnet',
-    startPlugColor: '#212529',
-    endPlugColor: '#f5f9f8',
+    path: 'fluid',
+    startPlugColor: '#000',
+    endPlugColor: '#000',
     gradient: true
 };
 
@@ -51,11 +51,10 @@ function fluxoConecta(elemento) {
 
         let linhaMouse = new LeaderLine(mouseEl, elmPoint, {
             size: 5,
-            endPlug: 'disc',
-
-            path: 'grid',
-            startPlugColor: '#212529',
-            endPlugColor: '#f5f9f8',
+            endPlug: 'arrow3',
+            path: 'fluid',
+            startPlugColor: '#000',
+            endPlugColor: '#000',
             gradient: true
         });
 
@@ -74,6 +73,11 @@ function fluxoConecta(elemento) {
 
                 idElementoDestino = idDestinoNumber[0];
                 idElementoOrigem = idNumber[0];
+
+                if (idElementoDestino == idElementoOrigem) {
+                    console.log("Não é possível conectar um elemento a si mesmo");
+                    return;
+                }
 
                 console.log("Será adicioado o valor: " + idNumber + "-" + idDestinoNumber);
 
@@ -107,30 +111,18 @@ function customDrag(elemento) {
         handle: ".elementoMovivel-imagem",
         stop: function () { // * Executado sempre que o card é solto
             $(this).closest('.elementoMovivel-container').css('position', 'absolute');
+            idNumber = pegaId($(this));
+            elementosDiagrama[idNumber].coordenadas = [$(this).offset().left, $(this).offset().top];
+            localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
         }
     });
     elemento.find(".draggable").on("drag", function () {
 
-        // * Pegar a id daquele elemento
         idNumber = pegaId($(this));
-
-        elementosDiagrama[idNumber].coordenadas = [$(this).offset().left, $(this).offset().top];
-
-        localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
-
-        // Vou pegar cada um dos valores do vetor de conexoes e atualizar a posição
 
         for (let i = 0; i < elementosDiagrama[idNumber].conexoes.length; i++) {
             elementosDiagrama[idNumber].conexoes[i].position();
         }
-
-        // // * Atualizar cada uma das conexoes
-        // for (let i = 0; i < TAM; i++) {
-        //     if (conexoes[i][idNumber][0] != null) {
-        //         conexoes[i][idNumber][0].position();
-        //     }
-        // }
-
     });
 }
 
@@ -151,7 +143,7 @@ function criaHTML(elementoMovivelObjeto) {
 
     return $(`
         <div class="elementoMovivel-container rounded-circle" style="${conteudoStyle};">
-            <div id="elementoMovivel-${elementoMovivelObjeto.id}" class="elementoMovivel draggable card">
+            <div id="elementoMovivel-${elementoMovivelObjeto.id}" class="elementoMovivel draggable card border-0">
                 <header class="elementoMovivel-header">
                     <img class="elementoMovivel-imagem" src="./roteador.jpeg"></img>
                     <div class="elementoMovivel-nome text-center py-1" contenteditable="true">${elementoMovivelObjeto.nome}</div>
@@ -189,17 +181,21 @@ function apagaElemento(elemento) {
         idNumber = pegaId($(this));
         $(this).closest('.elementoMovivel-container').remove();
 
+        // for (let i = 0; i < elementosDiagrama[idNumber].conexoes.length; i++) {
+        //     elementosDiagrama[idNumber].conexoes[i].remove();
+        // }
+
+        elementosDiagrama[idNumber] = new Elemento(null, null, null, null);
+
         localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
     });
 }
 
 function carregaElementos() {
     for (let i = 0; i < elementosDiagrama.length; i++) {
-
+        if (elementosDiagrama[i].id == null) { continue; }  
         let novoElemento = criaHTML(elementosDiagrama[i]);
-
         elementoFuncoes(novoElemento);
-
         $('section').append(novoElemento);
     }
 }
@@ -273,7 +269,8 @@ $(document).ready(function () {
         });
         $('.linkInsert').toggleClass('d-none');
     });
-    $('#exportaDados').click(function () {
+    $('#exportaDiagrama').click(function () {
         console.log("exportarDados");
+        localStorage.clear();
     });
 });

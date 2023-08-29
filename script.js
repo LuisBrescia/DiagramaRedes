@@ -16,7 +16,6 @@ function Elemento(id, nome, coordenadas, conexoes) {
 var elementosDiagrama = JSON.parse(localStorage.getItem('elementosDiagrama')) || []; // ? Vetor de objetos
 var dicionarioConexoes = JSON.parse(localStorage.getItem('dicionarioConexoes')) || {}; // ! Objeto
 
-console.log("Elementos: ", elementosDiagrama);
 for (let i = 0; i < elementosDiagrama.length; i++) {
     console.log(elementosDiagrama[i]);
 }
@@ -75,11 +74,14 @@ function fluxoConecta(elemento) {
                 idElementoOrigem = idNumber[0];
 
                 if (idElementoDestino == idElementoOrigem) {
-                    console.log("Não é possível conectar um elemento a si mesmo");
+                    $('.toast-body').text('Não é possível conectar um elemento a ele mesmo.');
+                    $('.toast').toast('show');
+                    linhaMouse.remove();
+                    elmpoint.remove();
+                    $(document).off('mousemove');
+                    $(document).off('mouseup');
                     return;
                 }
-
-                console.log("Será adicioado o valor: " + idNumber + "-" + idDestinoNumber);
 
                 let conexaoKey = idNumber + '-' + idDestinoNumber;
                 let linha = new LeaderLine(mouseEl, event.target, options);
@@ -167,14 +169,12 @@ function alteraNome(elemento) {
         idNumber = pegaId($(this).closest('.elementoMovivel'));
         elementosDiagrama[idNumber].nome = $(this).text();
         localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
-        console.log("Nome alterado");
     });
 }
 
 function apagaElemento(elemento) {
     elemento.find('.elementoMovivel').click(function () {
         if ($('#alteraModo i').hasClass('bi-arrows-move')) {
-            console.log("Modo de exclusão desativado");
             return;
         }
 
@@ -193,7 +193,7 @@ function apagaElemento(elemento) {
 
 function carregaElementos() {
     for (let i = 0; i < elementosDiagrama.length; i++) {
-        if (elementosDiagrama[i].id == null) { continue; }  
+        if (elementosDiagrama[i].id == null) { continue; }
         let novoElemento = criaHTML(elementosDiagrama[i]);
         elementoFuncoes(novoElemento);
         $('section').append(novoElemento);
@@ -262,7 +262,6 @@ $(document).ready(function () {
         $('section').append(novoElemento);
     });
     $('#alteraModo').click(function () {
-        console.log("ModoAlterado");
         $('#alteraModo i').toggleClass('bi-arrows-move bi-trash2');
         $('#alteraModo span').text(function (i, text) {
             return text === "Modo Exclusão" ? "Modo Edição" : "Modo Exclusão";
@@ -270,7 +269,8 @@ $(document).ready(function () {
         $('.linkInsert').toggleClass('d-none');
     });
     $('#exportaDiagrama').click(function () {
-        console.log("exportarDados");
+        $('.toast-body').text('Atualmente sendo usado para limpar o localStorage');
+        $('.toast').toast('show');
         localStorage.clear();
     });
 });

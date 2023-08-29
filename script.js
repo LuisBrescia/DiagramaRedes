@@ -7,11 +7,12 @@ apagaElemento(element) - Apaga um elemento caso o ambiente esteja em modo exclus
 conexaoElementos(conexaoKey) - Retorna os elementos conextados em uma conexao 
 */
 
-function Elemento(id, nome, coordenadas, conexoes) {
+function Elemento(id, nome, coordenadas, conexoes, tipo) {
     this.id = id;
     this.nome = nome;
     this.coordenadas = coordenadas;
     this.conexoes = conexoes; // * Vetor onde cara irá armazenar duas IDs
+    this.tipo = tipo; // * Conterá o caminho para determinado elemento
 }
 
 var elementosDiagrama = JSON.parse(localStorage.getItem('elementosDiagrama')) || []; // ? Vetor de objetos
@@ -27,7 +28,7 @@ var options = {
     endPlug: 'behind',
     startSocket: 'center',
     endSocket: 'center',
-    path: 'fluid',
+    path: 'grid',
     startPlugColor: '#0f0f0f',
     endPlugColor: '#0f0f0f',
     gradient: true,
@@ -137,13 +138,14 @@ function fluxoConecta(elemento) {
 }
 
 function customDrag(elemento) {
+
     elemento.find(".draggable").draggable({
         containment: "section",
         scroll: false,
         snap: false,
         stack: ".draggable",
         cursor: "grabbing",
-        handle: ".elementoMovivel-imagem",
+        handle: ".elementoMovivel-imagem-draggable",
         stop: function () { // * Executado sempre que o card é solto
             $(this).closest('.elementoMovivel-container').css('position', 'absolute');
             idNumber = pegaId($(this));
@@ -169,18 +171,15 @@ function criaHTML(elementoMovivelObjeto) {
         classe = 'd-none';
     }
 
-    let conteudoStyle = '';
-    if (elementoMovivelObjeto.coordenadas == null) {
-        conteudoStyle = 'top: 10%;';
-    } else {
-        conteudoStyle = 'top: ' + elementoMovivelObjeto.coordenadas[1] + 'px; left: ' + elementoMovivelObjeto.coordenadas[0] + 'px;';
-    }
+    console.log(elementoMovivelObjeto.coordenadas);
+
+    let conteudoStyle = 'top: ' + elementoMovivelObjeto.coordenadas[1] + 'px; left: ' + elementoMovivelObjeto.coordenadas[0] + 'px;';
 
     return $(`
         <div class="elementoMovivel-container rounded-circle" style="${conteudoStyle};">
             <div id="elementoMovivel-${elementoMovivelObjeto.id}" class="elementoMovivel draggable card border-0">
                 <header class="elementoMovivel-header">
-                    <img class="elementoMovivel-imagem" src="./roteador.jpeg"></img>
+                    <img class="elementoMovivel-imagem elementoMovivel-imagem-draggable" src="./${elementoMovivelObjeto.tipo}"></img>
                     <div class="elementoMovivel-nome text-center py-1" contenteditable="true">${elementoMovivelObjeto.nome}</div>
                 </header>
                 <span class="linkInsert ${classe}" id="linkInsert-${elementoMovivelObjeto.id}1"></span>
@@ -212,7 +211,6 @@ function apagaElemento(elemento) {
         }
 
         idNumber = pegaId($(this));
-        $(this).closest('.elementoMovivel-container').remove();
 
         for (let i = 0; i < dicionarioConexoes.length; i++) {
 
@@ -226,11 +224,16 @@ function apagaElemento(elemento) {
             }
         }
 
+        // > Preciso apagar a conexão do 2 vetor ao que parece
+
+        // > A conexão meio que continua lá
+
         for (let i = 0; i < elementosDiagrama[idNumber].conexoes.length; i++) {
             elementosDiagrama[idNumber].conexoes[i].remove();
         }
-
-        elementosDiagrama[idNumber] = new Elemento(null, null, null, null);
+        
+        $(this).closest('.elementoMovivel-container').remove();
+        elementosDiagrama[idNumber] = new Elemento(null, null, null, null, null);
 
         localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
         localStorage.setItem('dicionarioConexoes', JSON.stringify(dicionarioConexoes));
@@ -305,7 +308,13 @@ $(document).ready(function () {
             id++;
         }
 
-        let novoElementoObjeto = new Elemento(id, "Elemento " + id, [0, 0], []);
+        if (id % 2 == 0) {
+            var tipo = 'hubmau.jpg';
+        } else {
+            var tipo = 'roteador.jpeg';
+        }
+
+        let novoElementoObjeto = new Elemento(id, "Elemento " + id, [0, 0], [], tipo);
         let novoElemento = criaHTML(novoElementoObjeto);
 
         elementoFuncoes(novoElemento);
@@ -321,6 +330,7 @@ $(document).ready(function () {
             return text === "Modo Exclusão" ? "Modo Edição" : "Modo Exclusão";
         });
         $('.linkInsert').toggleClass('d-none');
+        $('.elementoMovivel-imagem').toggleClass('elementoMovivel-imagem-draggable');
     });
     $('#exportaDiagrama').click(function () {
         $('.toast-body').text('Atualmente sendo usado para limpar o localStorage');

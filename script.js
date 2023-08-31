@@ -296,9 +296,6 @@ function removeElementoDiagrama(ElementoDiagrama) {
         vetorElementosDiagrama[elementoDiagrama_idNumero].apagaElemento();
 
         vetorConexoes = vetorConexoes.filter(conexao => conexao.linkInsertOrigem_idNumero !== null && conexao.linkInsertDestino_idNumero !== null);
-        // Fazer o mesmo para o vetor de elementos
-        vetorElementosDiagrama = vetorElementosDiagrama.filter(elemento => elemento.id !== null);
-        
 
         localStorage.setItem('vetorConexoes', JSON.stringify(vetorConexoes));
         localStorage.setItem('vetorElementosDiagrama', JSON.stringify(vetorElementosDiagrama));

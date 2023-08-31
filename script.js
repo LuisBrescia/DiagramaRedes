@@ -1,169 +1,314 @@
 /*
 ? Documentação:
-fluxoConecta(element) - Configura conexão entre dois elementos
+
+* Classes
+
+ElementoDiagrama - Classe que representa um elemento do diagrama
+Conexao - Classe que representa uma conexão entre dois elementos do diagrama
+
+* Funções - ordenadas por ordem de complexidade
+
+removeUltimoAlgarismo(linkInsertIdNumero) - Remove o ultimo elemento de uma string, útil para conseguir id pai
+parseIdNumero(idCompleta) - Passa uma id completa e retorna apenas o número que vem depois de '-'
+exibirToaster(Mensagem) - Exibe um toaster com a mensagem passada como parâmetro
+funcoesElementoDiagrama(ElementoDiagrama) - Chama todas as funções que configuram um elemento do diagrama
+
+conectaElementosDiagrama(ElementoDiagrama) - Configura a conexão entre dois elementos do diagrama
 customDrag(elemento) - Configura as regras para dos elementos movíveis
-criaHTML(elementoMovivelObjeto) - HTML de elemento do diagrama
+criaElementoDiagramaHTML(elementoDiagramaObjeto) - HTML de elemento do diagrama
 apagaElemento(element) - Apaga um elemento caso o ambiente esteja em modo exclusão
 conexaoElementos(conexaoKey) - Retorna os elementos conextados em uma conexao 
+
+* Nomes
+
+linkInsert - Elemento que serve como ponto de conexão entre dois elementos do diagrama, cada elemento possui 4 linkInserts
+
+* Padronização
+
+linkInsertIdCompleta- ID do completa do linkInsert 
+linkInsertIdNumero - Apenas o número que vem depois de '-' no id de um linkInsert
+
+estiloLeaderLine_padrao - Estilo padrão da linha
+estiloLeaderLine_mouse - Estilo da linha que segue o mouse
+
 */
 
-function Elemento(id, nome, coordenadas, conexoes, tipo) {
-    this.id = id;
-    this.nome = nome;
-    this.coordenadas = coordenadas;
-    this.conexoes = conexoes; // * Vetor onde cara irá armazenar duas IDs
-    this.tipo = tipo; // * Conterá o caminho para determinado elemento
-}
-
-var elementosDiagrama = JSON.parse(localStorage.getItem('elementosDiagrama')) || []; // ? Vetor de objetos
-var dicionarioConexoes = JSON.parse(localStorage.getItem('dicionarioConexoes')) || []; // ! Vetor de strings
-
-for (let i = 0; i < elementosDiagrama.length; i++) {
-    console.log(elementosDiagrama[i]);
-}
-
-// * Estilização da linha
-var options = {
+// ? LeaderLine
+var estiloLeaderLinePadrao = {
     size: 3,
     endPlug: 'behind',
-    startSocket: 'center',
-    endSocket: 'center',
     path: 'grid',
-    startPlugColor: '#0f0f0f',
-    endPlugColor: '#0f0f0f',
-    gradient: true,
+    color: '#0f0f0f'
+};
+var estiloLeaderLineMouse = {
+    size: 3,
+    endPlug: 'arrow3',
+    path: 'fluid',
+    color: '#0f0f0f'
 };
 
-function fluxoConecta(elemento) {
-    elemento.find('.linkInsert').mousedown(function (e) {
+// ? Classes
+class ElementoDiagrama {
+    constructor(id, tipo, nome, coordenadas) {
+        this.id = id;
+        this.tipo = tipo;
+        this.nome = nome;
+        this.coordenadas = coordenadas;
+        this.conexoes = []; // > Talvez eu coloque um vetor que irá conter o Objeto Leader Line e sua respectiva conexão
+    }
+
+    apagaElemento() {
+        this.id = null;
+        this.tipo = null;
+        this.nome = null;
+        this.coordenadas = null;
+        this.conexoes = [];
+    }
+
+    imprimeAtributos() {
+        console.log(this.id);
+        console.log(this.tipo);
+        console.log(this.nome);
+        console.log(this.coordenadas);
+        console.log(this.conexoes);
+    }
+
+    adicionaConexao(conexao) {
+        this.conexoes.push(conexao);
+    }
+
+    removeConexao(conexao) { // ! Não entendi
+        const index = this.conexoes.indexOf(conexao);
+        if (index !== -1) {
+            this.conexoes.splice(index, 1);
+        }
+    }
+}
+class Conexao {
+    constructor(linkInsertOrigem_idNumero, linkInsertDestino_idNumero) {
+        this.linkInsertOrigem_idNumero = linkInsertOrigem_idNumero;
+        this.linkInsertDestino_idNumero = linkInsertDestino_idNumero;
+        this.linha = new LeaderLine(
+            document.getElementById('linkInsert-' + linkInsertOrigem_idNumero),
+            document.getElementById('linkInsert-' + linkInsertDestino_idNumero),
+            estiloLeaderLinePadrao
+        )
+    }
+
+    position() {
+        this.linha.position();
+    }
+
+    remover() { // > Não faz sentido já que a conexão é entre linkInsert de elementos e não elementos em si
+        this.linha.remove();
+        this.linkInsertOrigem_id.removeConexao(this);
+        this.linkInsertDestino_id.removeConexao(this);
+    }
+}
+
+// ? Variáveis LocalStorage
+const elementosRecuperados = JSON.parse(localStorage.getItem('vetorElementosDiagrama')) || [];
+var vetorConexoes = JSON.parse(localStorage.getItem('vetorConexoes')) || []; // ? Vetor de string que armazena todas as conexoes
+
+var vetorElementosDiagrama = elementosRecuperados.map(obj => {
+    return new ElementoDiagrama(obj.id, obj.tipo, obj.nome, obj.coordenadas);
+});
+
+// ? Funções
+
+// : Verificada
+function removeUltimoAlgarismo(linkInsertIdNumero) {
+    return linkInsertIdNumero.slice(0, -1);
+}
+
+// : Verificada
+function parseIdNumero(idCompleta) {
+    return idCompleta.split('-')[1];
+}
+
+// : Verificada
+function exibeToaster(mensagem) {
+    $('.toast-body').text(mensagem);
+    $('.toast').toast('show');
+}
+
+// : Verificada
+function funcoesElementoDiagrama(ElementoDiagrama) {
+    alteraNomeElementoDiagrama(ElementoDiagrama);
+    configuraMovimentacaoElementoDiagrama(ElementoDiagrama);
+    conectaElementoDiagrama(ElementoDiagrama);
+    removeElementoDiagrama(ElementoDiagrama);
+}
+
+// : Verificada
+function alteraNomeElementoDiagrama(ElementoDiagrama) {
+    ElementoDiagrama.find('.elementoDiagrama-nome').on('blur', function () {
+
+        if ($(this).text() == '') {
+            $(this).text('Elemento Diagrama');
+        }
+
+        elementoDiagrama_idNumero = parseIdNumero($(this).closest('.elementoDiagrama').attr('id'));
+        vetorElementosDiagrama[elementoDiagrama_idNumero].nome = $(this).text();
+        localStorage.setItem('vetorElementosDiagrama', JSON.stringify(vetorElementosDiagrama));
+    });
+}
+
+// : Verificada
+function configuraMovimentacaoElementoDiagrama(ElementoDiagrama) {
+    ElementoDiagrama.find(".draggable").draggable({
+        containment: "section",
+        scroll: false,
+        snap: false,
+        stack: ".draggable",
+        cursor: "grabbing",
+        handle: ".elementoDiagrama-imagem-draggable",
+        stop: function () {
+            $(this).closest('.elementoDiagrama-container').css('position', 'absolute');
+            elementoDiagrama_idNumero = parseIdNumero($(this).closest('.elementoDiagrama').attr('id'));
+            vetorElementosDiagrama[elementoDiagrama_idNumero].coordenadas = [$(this).offset().left, $(this).offset().top];
+            localStorage.setItem('vetorElementosDiagrama', JSON.stringify(vetorElementosDiagrama));
+        }
+    });
+    ElementoDiagrama.find(".draggable").on("drag", function () { // ! Está pegando o ID toda hora, revisar isso 
+        elementoDiagrama_idNumero = parseIdNumero($(this).closest('.elementoDiagrama').attr('id'));
+        vetorElementosDiagrama[elementoDiagrama_idNumero].conexoes.forEach(function (conexao) {
+            conexao.position();
+        });
+    });
+}
+
+// > Conexão entre elementos removida
+function conectaElementoDiagrama(ElementoDiagrama) {
+    ElementoDiagrama.find('.linkInsert').mousedown(function (e) {
+
         e.preventDefault();
 
-        let id = $(this).attr('id');
-        let idNumber = id.split('-')[1];
+        let linkInsertOrigem_id = $(this).attr('id');
+        let linkInsertOrigem_idNumero = parseIdNumero(linkInsertOrigem_id);
 
-        const mouseX = e.clientX + pageXOffset;
-        const mouseY = e.clientY + pageYOffset;
+        $('section').append($(`<div id="pontoMouse" style="top: ${e.clientY + pageYOffset}px; left: ${e.clientX + pageXOffset}px;"></div>`));
 
-        let elmpoint = $(`<div id="elmpoint" style="top: ${mouseY}px; left: ${mouseX}px;"></div>`);
-        $('section').append(elmpoint);
+        let linkInsertOrigem = document.getElementById(linkInsertOrigem_id);
+        let pontoMouseId = document.getElementById('pontoMouse');
 
-        let elmPoint = document.getElementById('elmpoint');
-        let mouseEl = document.getElementById('linkInsert-' + idNumber);
-
-        let linhaMouse = new LeaderLine(mouseEl, elmPoint, {
-            size: 3,
-            endPlug: 'arrow3',
-            path: 'fluid',
-            startPlugColor: '#0f0f0f',
-            endPlugColor: '#0f0f0f',
-            gradient: true
-        });
+        let linhaMouse = new LeaderLine(linkInsertOrigem, pontoMouseId, estiloLeaderLineMouse);
 
         $(document).mousemove(function (e) {
-            elmPoint.style.left = `${e.clientX + pageXOffset}px`;
-            elmPoint.style.top = `${e.clientY + pageYOffset}px`;
+            pontoMouseId.style.left = `${e.clientX + pageXOffset}px`;
+            pontoMouseId.style.top = `${e.clientY + pageYOffset}px`;
             linhaMouse.position();
         });
 
-        $(document).mouseup(function (event) {
+        $(document).mouseup(function (e) {
 
-            if ($(event.target).is(".linkInsert")) {
+            if ($(e.target).is(".linkInsert")) {
 
-                let idDestino = $(event.target).attr('id');
-                let idDestinoNumber = idDestino.split('-')[1];
+                let linkInsertDestino_id = $(e.target).attr('id');
+                let linkInsertDestino_idNumero = parseIdNumero(linkInsertDestino_id);
 
-                idElementoDestino = idDestinoNumber[0];
-                idElementoOrigem = idNumber[0];
+                let elementoOrigem_idNumero = removeUltimoAlgarismo(linkInsertOrigem_idNumero);
+                let elementoDestino_idNumero = removeUltimoAlgarismo(linkInsertDestino_idNumero);
 
-                if (idElementoDestino == idElementoOrigem) {
-                    $('.toast-body').text('Não é possível conectar um elemento a ele mesmo.');
-                    $('.toast').toast('show');
+                if (elementoDestino_idNumero == elementoOrigem_idNumero) {
+                    exibeToaster('Não é possível conectar um elemento a ele mesmo.');
                     linhaMouse.remove();
-                    elmpoint.remove();
+                    $('#pontoMouse').remove();
                     $(document).off('mousemove');
                     $(document).off('mouseup');
                     return;
                 }
 
-                // Preciso comparar id number com idDestindo e colocar o id menor primeiro
+                if (elementoOrigem_idNumero > elementoDestino_idNumero) {
+                    let aux = linkInsertOrigem_id;
+                    linkInsertOrigem_id = linkInsertDestino_id;
+                    linkInsertDestino_id = aux;
 
-                if (idNumber > idDestinoNumber) {
-                    let aux = idNumber;
-                    idNumber = String(idDestinoNumber);
-                    idDestinoNumber = String(aux);
+                    aux = linkInsertOrigem_idNumero;
+                    linkInsertOrigem_idNumero = linkInsertDestino_idNumero;
+                    linkInsertDestino_idNumero = aux;
+
+                    aux = elementoOrigem_idNumero;
+                    elementoOrigem_idNumero = elementoDestino_idNumero;
+                    elementoDestino_idNumero = aux;
                 }
 
-                let conexaoKey = idNumber + '-' + idDestinoNumber;
+                for (let i = 0; i < vetorConexoes.length; i++) {
+                    console.log(vetorConexoes[i]);
 
-                console.log(conexaoKey);
+                    let vetorConexoesElementoOrigem_idNumero = removeUltimoAlgarismo(vetorConexoes[i].linkInsertOrigem_idNumero);
+                    let vetorConexoesElementoDestino_idNumero = removeUltimoAlgarismo(vetorConexoes[i].linkInsertDestino_idNumero);
 
-                let conexaoElementosKey = conexaoElementos(conexaoKey);
-                let dicionarioConexoesElemento;
-
-                console.log(conexaoElementosKey);
-
-                for (let i = 0; i < dicionarioConexoes.length; i++) {
-
-                    dicionarioConexoesElemento = conexaoElementos(dicionarioConexoes[i]);
-                    console.log(dicionarioConexoesElemento);
-
-                    if (dicionarioConexoesElemento == conexaoElementosKey) {
-                        $('.toast-body').text('Não é possível conectar dois elementos mais de uma vez.');
-                        $('.toast').toast('show');
+                    if (elementoOrigem_idNumero == vetorConexoesElementoOrigem_idNumero && elementoDestino_idNumero == vetorConexoesElementoDestino_idNumero) {
+                        exibeToaster('Elementos já conectados.');
                         linhaMouse.remove();
-                        elmpoint.remove();
+                        $('#pontoMouse').remove();
                         $(document).off('mousemove');
                         $(document).off('mouseup');
                         return;
                     }
+
                 }
 
-                let linha = new LeaderLine(mouseEl, event.target, options);
+                let conexaoCriada = new Conexao(linkInsertOrigem_idNumero, linkInsertDestino_idNumero);
+                vetorConexoes.push(conexaoCriada);
 
-                dicionarioConexoes.push(conexaoKey);
+                vetorElementosDiagrama[elementoOrigem_idNumero].adicionaConexao(conexaoCriada);
+                vetorElementosDiagrama[elementoDestino_idNumero].adicionaConexao(conexaoCriada);
 
-                elementosDiagrama[idElementoOrigem].conexoes.push(linha);
-                elementosDiagrama[idElementoDestino].conexoes.push(linha);
+                linhaMouse.remove();
+                $('#pontoMouse').remove();
+                $(document).off('mousemove');
+                $(document).off('mouseup');
 
-                localStorage.setItem('dicionarioConexoes', JSON.stringify(dicionarioConexoes));
-                localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
+                localStorage.setItem('vetorConexoes', JSON.stringify(vetorConexoes));
+
+                return;
             }
 
             linhaMouse.remove();
-            elmpoint.remove();
+            $('#pontoMouse').remove();
             $(document).off('mousemove');
             $(document).off('mouseup');
         });
     });
 }
 
-function customDrag(elemento) {
-
-    elemento.find(".draggable").draggable({
-        containment: "section",
-        scroll: false,
-        snap: false,
-        stack: ".draggable",
-        cursor: "grabbing",
-        handle: ".elementoMovivel-imagem-draggable",
-        stop: function () { // * Executado sempre que o card é solto
-            $(this).closest('.elementoMovivel-container').css('position', 'absolute');
-            idNumber = pegaId($(this));
-            elementosDiagrama[idNumber].coordenadas = [$(this).offset().left, $(this).offset().top];
-            localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
+function removeElementoDiagrama(ElementoDiagrama) {
+    ElementoDiagrama.find('.elementoDiagrama').click(function () {
+        if ($('#alteraModo i').hasClass('bi-arrows-move')) {
+            return;
         }
-    });
-    elemento.find(".draggable").on("drag", function () {
 
-        idNumber = pegaId($(this));
+        elementoDiagrama_idNumero = parseIdNumero($(this).attr('id'));
+        $(this).closest('.elementoDiagrama-container').remove();
 
-        for (let i = 0; i < elementosDiagrama[idNumber].conexoes.length; i++) {
-            elementosDiagrama[idNumber].conexoes[i].position();
-        }
+        console.log(vetorElementosDiagrama[elementoDiagrama_idNumero]);
+        vetorElementosDiagrama[elementoDiagrama_idNumero].apagaElemento();
+
+
+        // for (let i = 0; i < dicionarioConexoes.length; i++) {
+
+        //     let idOrigem = dicionarioConexoes[i].split('-')[0];
+        //     let idDestino = dicionarioConexoes[i].split('-')[1];
+
+        //     // ! Não entendi essa parte
+        //     if (idOrigem[0] == idNumero || idDestino[0] == idNumero) {
+        //         dicionarioConexoes.splice(i, 1);
+        //         i--;
+        //     }
+        // }
+
+        // for (let i = 0; i < elementosDiagrama[idNumero].conexoes.length; i++) {
+        //     elementosDiagrama[idNumero].conexoes[i].remove();
+        // }
+
+        localStorage.setItem('vetorElementosDiagrama', JSON.stringify(vetorElementosDiagrama));
+        // localStorage.setItem('dicionarioConexoes', JSON.stringify(dicionarioConexoes));
     });
 }
 
-function criaHTML(elementoMovivelObjeto) {
+function criaElementoDiagramaHTML(elementoDiagramaObjeto) {
 
     let classe = '';
 
@@ -171,103 +316,43 @@ function criaHTML(elementoMovivelObjeto) {
         classe = 'd-none';
     }
 
-    console.log(elementoMovivelObjeto.coordenadas);
+    console.log(elementoDiagramaObjeto.coordenadas);
 
-    let conteudoStyle = 'top: ' + elementoMovivelObjeto.coordenadas[1] + 'px; left: ' + elementoMovivelObjeto.coordenadas[0] + 'px;';
+    let conteudoStyle = 'top: ' + elementoDiagramaObjeto.coordenadas[1] + 'px; left: ' + elementoDiagramaObjeto.coordenadas[0] + 'px;';
 
     return $(`
-        <div class="elementoMovivel-container rounded-circle" style="${conteudoStyle};">
-            <div id="elementoMovivel-${elementoMovivelObjeto.id}" class="elementoMovivel draggable card border-0">
-                <header class="elementoMovivel-header">
-                    <img class="elementoMovivel-imagem elementoMovivel-imagem-draggable" src="./${elementoMovivelObjeto.tipo}"></img>
-                    <div class="elementoMovivel-nome text-center py-1" contenteditable="true">${elementoMovivelObjeto.nome}</div>
+        <div class="elementoDiagrama-container rounded-circle" style="${conteudoStyle};">
+            <div id="elementoDiagrama-${elementoDiagramaObjeto.id}" class="elementoDiagrama draggable card border-0">
+                <header class="elementoDiagrama-header">
+                    <img class="elementoDiagrama-imagem elementoDiagrama-imagem-draggable" src="./${elementoDiagramaObjeto.tipo}"></img>
+                    <div class="elementoDiagrama-nome text-center py-1" contenteditable="true">${elementoDiagramaObjeto.nome} ${elementoDiagramaObjeto.id}</div>
                 </header>
-                <span class="linkInsert ${classe}" id="linkInsert-${elementoMovivelObjeto.id}1"></span>
-                <span class="linkInsert ${classe}" id="linkInsert-${elementoMovivelObjeto.id}2"></span>
-                <span class="linkInsert ${classe}" id="linkInsert-${elementoMovivelObjeto.id}3"></span>
-                <span class="linkInsert ${classe}" id="linkInsert-${elementoMovivelObjeto.id}4"></span>
+                <span class="linkInsert ${classe}" id="linkInsert-${elementoDiagramaObjeto.id}1"></span>
+                <span class="linkInsert ${classe}" id="linkInsert-${elementoDiagramaObjeto.id}2"></span>
+                <span class="linkInsert ${classe}" id="linkInsert-${elementoDiagramaObjeto.id}3"></span>
+                <span class="linkInsert ${classe}" id="linkInsert-${elementoDiagramaObjeto.id}4"></span>
             </div>
         </div>
     `);
 }
 
-function alteraNome(elemento) {
-    elemento.find('.elementoMovivel-nome').on('blur', function () {
-
-        if ($(this).text() == '') {
-            $(this).text('Elemento');
-        }
-
-        idNumber = pegaId($(this).closest('.elementoMovivel'));
-        elementosDiagrama[idNumber].nome = $(this).text();
-        localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
+function carregaElementosDiagrama() {
+    vetorElementosDiagrama.forEach(ElementoDiagrama => {
+        if (ElementoDiagrama.id == null) { return; } // > Acho meio estranho não retornar a função toda mas ok
+        let elementoDiagramaHTML = criaElementoDiagramaHTML(ElementoDiagrama);
+        funcoesElementoDiagrama(elementoDiagramaHTML);
+        $('section').append(elementoDiagramaHTML);
     });
-}
-
-function apagaElemento(elemento) {
-    elemento.find('.elementoMovivel').click(function () {
-        if ($('#alteraModo i').hasClass('bi-arrows-move')) {
-            return;
-        }
-
-        idNumber = pegaId($(this));
-
-        for (let i = 0; i < dicionarioConexoes.length; i++) {
-
-            let idOrigem = dicionarioConexoes[i].split('-')[0];
-            let idDestino = dicionarioConexoes[i].split('-')[1];
-
-            // ! Não entendi essa parte
-            if (idOrigem[0] == idNumber || idDestino[0] == idNumber) {
-                dicionarioConexoes.splice(i, 1);
-                i--;
-            }
-        }
-
-        // > Preciso apagar a conexão do 2 vetor ao que parece
-
-        // > A conexão meio que continua lá
-
-        for (let i = 0; i < elementosDiagrama[idNumber].conexoes.length; i++) {
-            elementosDiagrama[idNumber].conexoes[i].remove();
-        }
-        
-        $(this).closest('.elementoMovivel-container').remove();
-        elementosDiagrama[idNumber] = new Elemento(null, null, null, null, null);
-
-        localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
-        localStorage.setItem('dicionarioConexoes', JSON.stringify(dicionarioConexoes));
-    });
-}
-
-function carregaElementos() {
-    for (let i = 0; i < elementosDiagrama.length; i++) {
-        if (elementosDiagrama[i].id == null) { continue; }
-        let novoElemento = criaHTML(elementosDiagrama[i]);
-        elementoFuncoes(novoElemento);
-        $('section').append(novoElemento);
-    }
 }
 
 function carregaConexoes() {
+    for(let i = 0; i < vetorConexoes.length; i++) {
+        let conexaoCriada = new Conexao(vetorConexoes[i].linkInsertOrigem_idNumero, vetorConexoes[i].linkInsertDestino_idNumero);
+        vetorConexoes[i] = conexaoCriada;
 
-    // * Antes de carregar as conexões, é necessário apagar todas elas
-    for (let i = 0; i < elementosDiagrama.length; i++) {
-        elementosDiagrama[i].conexoes = [];
-    }
-
-    for (let i = 0; i < dicionarioConexoes.length; i++) {
-        let idOrigem = dicionarioConexoes[i].split('-')[0];
-        let idDestino = dicionarioConexoes[i].split('-')[1];
-
-        let linha = new LeaderLine(document.getElementById('linkInsert-' + idOrigem), document.getElementById('linkInsert-' + idDestino), options);
-
-        let idOrigemElemento = idOrigem.slice(0, -1);
-        let idOrigemDestino = idDestino.slice(0, -1);
-
-        elementosDiagrama[idOrigemElemento].conexoes.push(linha);
-        elementosDiagrama[idOrigemDestino].conexoes.push(linha);
-
+        // Preciso também adicionar os vetores a seus respectivos elementos
+        vetorElementosDiagrama[removeUltimoAlgarismo(vetorConexoes[i].linkInsertOrigem_idNumero)].adicionaConexao(conexaoCriada);
+        vetorElementosDiagrama[removeUltimoAlgarismo(vetorConexoes[i].linkInsertDestino_idNumero)].adicionaConexao(conexaoCriada);
     }
 }
 
@@ -281,46 +366,37 @@ function conexaoElementos(conexaoKey) {
     return idOrigemElemento + '-' + idOrigemDestino;
 }
 
-function pegaId(elemento) {
-    return parseInt(elemento.attr('id').split('-')[1]);
-}
-
-function elementoFuncoes(elemento) {
-    customDrag(elemento);
-    fluxoConecta(elemento);
-    apagaElemento(elemento);
-    alteraNome(elemento);
-}
-
 $(document).ready(function () {
 
-    carregaElementos();
-    setTimeout(carregaConexoes, 300); // Provavelmente a atualização de linhas vai resolver esse problema
+    carregaElementosDiagrama();
+    setTimeout(carregaConexoes, 100); // > Futuramente trocar setTimeout por uma promise
 
     $('#adicionaElemento').click(function () {
 
-        var id = 0;
+        let id = 0;
 
         while (true) {
-            if ($('#elementoMovivel-' + id).length == 0) {
+            if ($('#elementoDiagrama-' + id).length == 0) {
                 break;
             }
             id++;
         }
 
+        let tipo = 'roteador.jpeg';
+
         if (id % 2 == 0) {
-            var tipo = 'hubmau.jpg';
-        } else {
-            var tipo = 'roteador.jpeg';
+            tipo = 'hubmau.jpg';
         }
 
-        let novoElementoObjeto = new Elemento(id, "Elemento " + id, [0, 0], [], tipo);
-        let novoElemento = criaHTML(novoElementoObjeto);
+        let novoElementoObjeto = new ElementoDiagrama(id, tipo, 'Element', [0, 0]);
+        let novoElemento = criaElementoDiagramaHTML(novoElementoObjeto);
 
-        elementoFuncoes(novoElemento);
+        funcoesElementoDiagrama(novoElemento);
 
-        elementosDiagrama[id] = novoElementoObjeto;
-        localStorage.setItem('elementosDiagrama', JSON.stringify(elementosDiagrama));
+        vetorElementosDiagrama[id] = novoElementoObjeto;
+        vetorElementosDiagrama[id].imprimeAtributos();
+
+        localStorage.setItem('vetorElementosDiagrama', JSON.stringify(vetorElementosDiagrama));
 
         $('section').append(novoElemento);
     });
@@ -330,11 +406,10 @@ $(document).ready(function () {
             return text === "Modo Exclusão" ? "Modo Edição" : "Modo Exclusão";
         });
         $('.linkInsert').toggleClass('d-none');
-        $('.elementoMovivel-imagem').toggleClass('elementoMovivel-imagem-draggable');
+        $('.elementoDiagrama-imagem').toggleClass('elementoDiagrama-imagem-draggable');
     });
     $('#exportaDiagrama').click(function () {
-        $('.toast-body').text('Atualmente sendo usado para limpar o localStorage');
-        $('.toast').toast('show');
+        exibeToaster('Atualmente sendo usado para limpar o localStorage');
         localStorage.clear();
     });
 });

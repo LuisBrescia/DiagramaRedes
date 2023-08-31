@@ -13,13 +13,6 @@
   outline: none;
 }
 
-#elmpoint {
-  position: absolute;
-  width: 0;
-  height: 0;
-  display: block;
-}
-
 :root {
   --neon: currentColor;
   --fundo: aliceblue;

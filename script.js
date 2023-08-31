@@ -62,7 +62,7 @@ class ElementoDiagrama {
         this.tipo = null;
         this.nome = null;
         this.coordenadas = null;
-        this.conexoes = [];
+        this.conexoes = [];                      
     }
 
     imprimeAtributos() {
@@ -101,8 +101,11 @@ class Conexao {
 
     remover() { // > Não faz sentido já que a conexão é entre linkInsert de elementos e não elementos em si
         this.linha.remove();
-        this.linkInsertOrigem_id.removeConexao(this);
-        this.linkInsertDestino_id.removeConexao(this);
+        // this.linkInsertOrigem_id.removeConexao(this);
+        // this.linkInsertDestino_id.removeConexao(this);
+        // Gostaria de deletar o objeto 
+        this.linkInsertOrigem_idNumero = null;
+        this.linkInsertDestino_idNumero = null;
     }
 }
 
@@ -281,30 +284,24 @@ function removeElementoDiagrama(ElementoDiagrama) {
         }
 
         elementoDiagrama_idNumero = parseIdNumero($(this).attr('id'));
+
         $(this).closest('.elementoDiagrama-container').remove();
 
-        console.log(vetorElementosDiagrama[elementoDiagrama_idNumero]);
+        for(let i = 0; i < vetorConexoes.length; i++) {
+            if(removeUltimoAlgarismo(vetorConexoes[i].linkInsertOrigem_idNumero) == elementoDiagrama_idNumero || removeUltimoAlgarismo(vetorConexoes[i].linkInsertDestino_idNumero) == elementoDiagrama_idNumero) {
+                vetorConexoes[i].remover();
+            }
+        }
+
         vetorElementosDiagrama[elementoDiagrama_idNumero].apagaElemento();
 
+        vetorConexoes = vetorConexoes.filter(conexao => conexao.linkInsertOrigem_idNumero !== null && conexao.linkInsertDestino_idNumero !== null);
+        // Fazer o mesmo para o vetor de elementos
+        vetorElementosDiagrama = vetorElementosDiagrama.filter(elemento => elemento.id !== null);
+        
 
-        // for (let i = 0; i < dicionarioConexoes.length; i++) {
-
-        //     let idOrigem = dicionarioConexoes[i].split('-')[0];
-        //     let idDestino = dicionarioConexoes[i].split('-')[1];
-
-        //     // ! Não entendi essa parte
-        //     if (idOrigem[0] == idNumero || idDestino[0] == idNumero) {
-        //         dicionarioConexoes.splice(i, 1);
-        //         i--;
-        //     }
-        // }
-
-        // for (let i = 0; i < elementosDiagrama[idNumero].conexoes.length; i++) {
-        //     elementosDiagrama[idNumero].conexoes[i].remove();
-        // }
-
+        localStorage.setItem('vetorConexoes', JSON.stringify(vetorConexoes));
         localStorage.setItem('vetorElementosDiagrama', JSON.stringify(vetorElementosDiagrama));
-        // localStorage.setItem('dicionarioConexoes', JSON.stringify(dicionarioConexoes));
     });
 }
 

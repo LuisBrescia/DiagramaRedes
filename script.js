@@ -12,9 +12,9 @@ removeUltimoAlgarismo(linkInsertIdNumero) - Remove o ultimo elemento de uma stri
 parseIdNumero(idCompleta) - Passa uma id completa e retorna apenas o número que vem depois de '-'
 exibirToaster(Mensagem) - Exibe um toaster com a mensagem passada como parâmetro
 funcoesElementoDiagrama(ElementoDiagrama) - Chama todas as funções que configuram um elemento do diagrama
+configuraMovimentacaoElementoDiagrama(elemento) - Configura as regras para dos elementos movíveis
 
 conectaElementosDiagrama(ElementoDiagrama) - Configura a conexão entre dois elementos do diagrama
-customDrag(elemento) - Configura as regras para dos elementos movíveis
 criaElementoDiagramaHTML(elementoDiagramaObjeto) - HTML de elemento do diagrama
 apagaElemento(element) - Apaga um elemento caso o ambiente esteja em modo exclusão
 conexaoElementos(conexaoKey) - Retorna os elementos conextados em uma conexao 
@@ -73,15 +73,12 @@ class ElementoDiagrama {
         console.log(this.conexoes);
     }
 
-    adicionaConexao(conexao) {
-        this.conexoes.push(conexao);
+    filtraConexoes() {
+        this.conexoes = this.conexoes.filter(conexao => conexao.linkInsertOrigem_idNumero !== null && conexao.linkInsertDestino_idNumero !== null);
     }
 
-    removeConexao(conexao) { // ! Não entendi
-        const index = this.conexoes.indexOf(conexao);
-        if (index !== -1) {
-            this.conexoes.splice(index, 1);
-        }
+    adicionaConexao(conexao) {
+        this.conexoes.push(conexao);
     }
 }
 class Conexao {
@@ -243,12 +240,11 @@ function conectaElementoDiagrama(ElementoDiagrama) {
                     let vetorConexoesElementoDestino_idNumero = removeUltimoAlgarismo(vetorConexoes[i].linkInsertDestino_idNumero);
 
                     if (elementoOrigem_idNumero == vetorConexoesElementoOrigem_idNumero && elementoDestino_idNumero == vetorConexoesElementoDestino_idNumero) {
-                        exibeToaster('Elementos já conectados.');
-                        linhaMouse.remove();
-                        $('#pontoMouse').remove();
-                        $(document).off('mousemove');
-                        $(document).off('mouseup');
-                        return;
+                        vetorConexoes[i].remover();
+                        vetorConexoes = vetorConexoes.filter(conexao => conexao.linkInsertOrigem_idNumero !== null && conexao.linkInsertDestino_idNumero !== null);
+                        
+                        vetorElementosDiagrama[elementoOrigem_idNumero].filtraConexoes();
+                        vetorElementosDiagrama[elementoDestino_idNumero].filtraConexoes();   
                     }
 
                 }
@@ -279,7 +275,7 @@ function conectaElementoDiagrama(ElementoDiagrama) {
 
 function removeElementoDiagrama(ElementoDiagrama) {
     ElementoDiagrama.find('.elementoDiagrama').click(function () {
-        if ($('#alteraModo i').hasClass('bi-arrows-move')) {
+        if ($('#alteraModo').hasClass('bi-arrows-move')) {
             return;
         }
 
@@ -306,7 +302,7 @@ function criaElementoDiagramaHTML(elementoDiagramaObjeto) {
 
     let classe = '';
 
-    if ($('#alteraModo i').hasClass('bi-trash2')) {
+    if ($('#alteraModo').hasClass('bi-trash2')) {
         classe = 'd-none';
     }
 
@@ -315,11 +311,11 @@ function criaElementoDiagramaHTML(elementoDiagramaObjeto) {
     let conteudoStyle = 'top: ' + elementoDiagramaObjeto.coordenadas[1] + 'px; left: ' + elementoDiagramaObjeto.coordenadas[0] + 'px;';
 
     return $(`
-        <div class="elementoDiagrama-container rounded-circle" style="${conteudoStyle};">
-            <div id="elementoDiagrama-${elementoDiagramaObjeto.id}" class="elementoDiagrama draggable card border-0">
+        <div class="elementoDiagrama-container" style="${conteudoStyle};">
+            <div id="elementoDiagrama-${elementoDiagramaObjeto.id}" class="bg-white elementoDiagrama draggable border border-dark rounded-3 border-2 p-2">
                 <header class="elementoDiagrama-header">
-                    <img class="elementoDiagrama-imagem elementoDiagrama-imagem-draggable" src="./${elementoDiagramaObjeto.tipo}"></img>
-                    <div class="elementoDiagrama-nome text-center py-1" contenteditable="true">${elementoDiagramaObjeto.nome} ${elementoDiagramaObjeto.id}</div>
+                    <img class="elementoDiagrama-imagem elementoDiagrama-imagem-draggable mb-2" src="./${elementoDiagramaObjeto.tipo}"></img>
+                    <div class="elementoDiagrama-nome text-center py-1" contenteditable="true">${elementoDiagramaObjeto.nome}</div>
                 </header>
                 <span class="linkInsert ${classe}" id="linkInsert-${elementoDiagramaObjeto.id}1"></span>
                 <span class="linkInsert ${classe}" id="linkInsert-${elementoDiagramaObjeto.id}2"></span>
@@ -365,9 +361,11 @@ $(document).ready(function () {
     carregaElementosDiagrama();
     setTimeout(carregaConexoes, 100); // > Futuramente trocar setTimeout por uma promise
 
-    $('#adicionaElemento').click(function () {
+    $('#menuAdicionar').on('click', 'li', function () {
+
 
         let id = 0;
+        let item = $(this).data('item');
 
         while (true) {
             if ($('#elementoDiagrama-' + id).length == 0) {
@@ -376,13 +374,10 @@ $(document).ready(function () {
             id++;
         }
 
-        let tipo = 'roteador.jpeg';
+        let tipo = item + '.jpg';
 
-        if (id % 2 == 0) {
-            tipo = 'hubmau.jpg';
-        }
 
-        let novoElementoObjeto = new ElementoDiagrama(id, tipo, 'Element', [0, 0]);
+        let novoElementoObjeto = new ElementoDiagrama(id, tipo, $(this).data('item') + ' ' + id, [id * 25, id * 25]);
         let novoElemento = criaElementoDiagramaHTML(novoElementoObjeto);
 
         funcoesElementoDiagrama(novoElemento);
@@ -395,11 +390,9 @@ $(document).ready(function () {
         $('section').append(novoElemento);
     });
     $('#alteraModo').click(function () {
-        $('#alteraModo i').toggleClass('bi-arrows-move bi-trash2');
-        $('#alteraModo span').text(function (i, text) {
-            return text === "Modo Exclusão" ? "Modo Edição" : "Modo Exclusão";
-        });
+        $('#alteraModo').toggleClass('bi-arrows-move bi-trash2');
         $('.linkInsert').toggleClass('d-none');
+        // $('.elementoDiagrama').toggleClass('border');
         $('.elementoDiagrama-imagem').toggleClass('elementoDiagrama-imagem-draggable');
     });
     $('#exportaDiagrama').click(function () {

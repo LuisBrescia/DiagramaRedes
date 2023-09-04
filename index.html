@@ -8,7 +8,6 @@
     <title>Diagrama Redes</title>
     <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="./node_modules/bootstrap-icons/font/bootstrap-icons.css" />
-    <link rel="stylesheet" href="./CSS/style.css" />
     <link rel="stylesheet" href="./diagrama.css" />
     <link rel="icon" type="image/svg+xml" href="./node_modules/bootstrap-icons/icons/pc-display.svg">
 </head>
@@ -16,33 +15,30 @@
 <body>
     <div class="telaInteira d-flex">
 
-        <!-- ? Página -->
+        <!-- ? Página   -->
         <main class="col h-100 d-flex flex-column-reverse justify-content-between">
-            <!-- * Botões -->
-            <div class="barraLista funcionalidades btn-group shadow-lg d-flex position-sticky top-0" role="group"
-                aria-label="Basic example">
-                <button type="button" id="adicionaElemento"
-                    class="border-0 col-4 funcionalidade btn rounded-0 fw-light">
-                    <i class="bi-plus-lg"></i>
-                    <span class="d-none d-md-inline ms-2">Adicionar</span>
-                </button>
-                <button type="button" id="alteraModo" class=" border-0 col-4 funcionalidade btn rounded-0 bolder">
-                    <i class="bi-arrows-move"></i>
-                    <span class="d-none d-md-inline ms-2">Modo Edição</span>
-                    <!-- > Aqui irá mudar entre modo edição e construção -->
-                </button>
-
-                <button type="button" id="exportaDiagrama" class="border-0 col-4 funcionalidade btn rounded-0 fw-light">
-                    <i class="bi-box-arrow-up-left"></i>
-                    <span class="d-none d-md-inline ms-2">Exportar</span>
-                </button>
-            </div>
 
             <!-- * Nosso "Canvas" onde os cards serão adicionados -->
             <section class="col position-static">
-                <!-- * Cards estãrao aqui -->
-                
+                <!-- * Elementos estãrao aqui -->
             </section>
+
+            <div id="buttons-funcionalidade" class="d-flex gap-3">
+
+                <div class="position-relative">
+                    <button id="adicionaElemento" class="bi-plus-lg btn shadow px-3 py-2">&nbsp; Adicionar</button>
+                    <ul id="menuAdicionar" class="bg-white position-absolute list-unstyled border border-2 rounded-2 border-dark p-1">
+                        <li class="rounded-2 p-1 fs-5" data-item="roteador">Roteador</li>
+                        <li class="rounded-2 p-1 fs-5" data-item="hubmau">Hub</li>
+                        <li class="rounded-2 p-1 fs-5" data-item="texto">Texto</li>
+                    </ul>
+                </div>
+
+                <button id="alteraModo" class="bi-arrows-move btn shadow px-3 py-2">&nbsp; Mudar modo</button>
+
+                <button id="exportaDiagrama" class="bi-box-arrow-up-left btn shadow px-3 py-2">&nbsp; Exportar</button>
+
+            </div>
         </main>
 
         <!-- * Toaster -->
@@ -64,7 +60,6 @@
     <script src="./node_modules/@popperjs/core/dist/umd/popper.js"></script>
     <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./JS/barraLateral.js"></script>
     <script src="./JS/leader-line.min.js"></script>
     <script src="./script.js"></script>
 </body>
